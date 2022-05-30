@@ -42,15 +42,8 @@ What is Env?:
 	
 	딥러닝이나 기타 여러가지 분석할 때는 큰 문제가 된다
  	Anaconda가 대표적으로 가상환경을 만들어줌 @note
- 
- 
-What is API? :
-	Application Programming Interface
-	어떤 프로그램과 소통하는 방식인데... 많은 곳에서 Open API를 제공함(구글, 네이버)
- 
- 
-What is Terminal?:
-	리눅스나 맥에서 컴퓨터 os 단과 직접 소통하기 위한 연결창구 
+  
+	Anaconda -> 파이썬, R 패키지 단에서 가상환경....이거로 부족할 땐? Docker 사용
  
  
 What is Good code?:
@@ -65,7 +58,7 @@ Purpose :
 
 """
 
-# 1-1. Web API automation
+# 1-1. Basics
 
 """
 모든 코딩에 앞서 먼저 슈도 코드를 작성하는 습관을 들임
@@ -76,48 +69,84 @@ Purpose :
 
 목적 : 
 	업무 자동화를 이루세요~
-	
+ 
+# 과제
+	1. vscode 설치
+	2. Anaconda 설치
+	3. 터미널 활용해서 conda 가상환경 내에 Jupyter notebook 설치 
+ 
+# vscode extension 읽어보고 필요한것들 인스톨해보세요.
+
+# html 공부 읽어보세요
+https://brunch.co.kr/@coveryou/14
+https://opentutorials.org/course/1073
+
 """
 
-# 1-2. Web API automation
+# 2-1. Atlas Automation 1
+
+"""
+What is API? :
+	Application Programming Interface
+	어떤 프로그램과 소통하는 방식인데... 많은 곳에서 Open API를 제공함(구글, 네이버)
+
+What is WWW?:
+	world wide web. HTML,HTTP,Web client, Web server
+	웹페이지는 HTML로 구성  + Javascript
+	Web browser는 특정 형식으로 HTML을 보여주는 도구
+ 
+API가 없을 땐 어떤 식으로 자동화해야하나? :
+	API 없이도 웹기반 문서들은 전부 WWW 표준에 따라 HTML 형식을 가지고 있음
+	HTML 문서를 다운받아서 직접 조작하는 방식으로 진행 가능함
+
+웹페이지를 파이썬으로 조작하기 위해서는 어떻게 해야하나? :
+	단순히 데이터를 얻는 작업만 진행(크롤링) -> Beautifulsoup
+	Interactive한 작업을 진행 -> : selenium
+ 
+ 
+목적 : 
+ATLAS에서 PLP를 짜서 다운로드 받고 자동으로 서버에서 실행되고 결과알림
+
+1주차 
+# 과제 1.  
+#	ATLAS(http://atlas-v280.abmi.kr/#/home) 접속 및 로그인해서 PLP 다운로드 페이지까지 진행
+# 과제 2.
+#	만들어진 PLP package zipfile로 다운 받음
+# 과제 3.  
+#	zipfile을 서버로 이동시키고, 자동으로 해제시킴
+
+# 가능하면 아래 것도
+# 과제 4.
+#   서버에서 자동으로 PLP가 실행되게 하고, 결과를 확인함
+
+"""
+
+# 2-2. Atlas Automation 2 
+
+"""
+ 
+목적 : 
+코호트 혹은 PLE 여러개 작성시 다른 정의는 동일하고 한두가지 조건만 바뀔 때... -> GUI를 이용해서 작성시 너무 오래걸린다.
+list를 이용해서 한번에 여러개의 코호트 or PLE를 정의할 수는 없나?
+
+# 과제 1.  
+#	분석을 원하는 리스트를 작성하고 그에 맞춰서 코호트를 작성
+# 과제 2.
+#	분석을 원하는 리스트를 작성하고 그에 맞춰서 PLE를 작성
+
+
+"""
+# 3. Logging + Configuration
 
 """
 목적 : 
-	구글 캘린더 automation을 위한 seminar_automator class를 제작함
-	class method : 업데이트
-
-"""
-
-# 1-3. Logging을 진행해보자
-
-"""
-목적 : 
+	Dataclass 및 xml, json, yaml 개념을 확인함
+	argparse 사용
 	로깅 개념 이해하고 진행해보기
 
 """
 
-
-# 2. Atlas Automation
-
-"""
-
-목적 : 
-ATLAS에서 PLP를 짜서 다운로드 받고 자동으로 서버에서 실행되고 결과알림
-
-Flow : 
-	1. ATLAS 다운로드 받음 as zipfile
-	2. zipfile을 서버로 이동시킴
-	3. 서버에서 zipfile을 해제
-	4. Config 설정 
-	5. PLP 실행
-	6. 결과 확인
- 
-Dataclass 및 xml, json, yaml 개념을 확인함
-argparse 사용
-
-"""
-
-# 3. Automation for Lab
+# 4. Automation for Lab
 
 """
 
@@ -135,17 +164,7 @@ if __name__ == "__main__":
     # unzip(server_path)
     # plp_config_set(ID, PW, CDM)
     # run_plp(plp_path)
-    pass
+    print(1)
 
 
-# 4. Packing for Reusable code
 
-"""
-
-목적 : 
-작성한 automation 코드를 재사용을 위해 package화 진행
-
-Flow : 
-
-
-"""
