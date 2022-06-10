@@ -1,0 +1,18 @@
+client: "AUMC"
+db_conf:
+  server: "128.1.99.58"
+  port: 1433
+  db: "cbj"
+  user: "cbj"
+  pw: "qwer1234!@"
+  schema: "dbo2"
+  table: "condition_occurrence"
+  dbms: "sql server"
+  cdmDatabaseSchema: 'CDMPv532.dbo'
+  cdmDatabaseName: 'AUSOM'
+  cohortDatabaseSchema: 'cohortDB.dbo'
+  databaseId: 'AUSOM'
+  databaseName: 'AUSOM'
+  databaseDescription: 'AUSOM'
+  oracleTempSchema: null
+
