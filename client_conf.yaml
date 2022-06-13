@@ -4,15 +4,14 @@ db_conf:
   port: 1433
   db: "cbj"
   user: "cbj"
-  pw: "qwer1234!@"
+  pw: "qwer1234!@"  #### what is this?
   schema: "dbo2"
   table: "condition_occurrence"
   dbms: "sql server"
   cdmDatabaseSchema: 'CDMPv532.dbo'
   cdmDatabaseName: 'AUSOM'
-  cohortDatabaseSchema: 'cohortDB.dbo'
-  databaseId: 'AUSOM'
+  cohortDatabaseSchema: 'cohortDB.dbo'  #### what is this?
+  databaseId: 'AUSOM'  #### what is this?
   databaseName: 'AUSOM'
   databaseDescription: 'AUSOM'
   oracleTempSchema: null
-

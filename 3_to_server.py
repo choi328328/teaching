@@ -22,6 +22,7 @@ import paramiko
 from scp import SCPClient
 from datetime import datetime
 from datetime import timedelta
+from getpass import getpass
 
 def createSSHClient(server, port, user, password):
     client = paramiko.SSHClient()
@@ -30,7 +31,8 @@ def createSSHClient(server, port, user, password):
     client.connect(server, port, user, password)
     return client
 
-ssh = createSSHClient('10.5.12.43', '22', 'cbj', 'choi328328')
+pw= getpass()
+ssh = createSSHClient('10.5.12.43', '22', 'cbj', pw)
 
 
 
@@ -42,17 +44,23 @@ base_path = '/home/cbj/ssh_test'
 scp.put('test.zip',base_path)
 
 # %%
+
+
+# %%
 # unzip
 
-stdin, stdout, stderr=ssh.exec_command(f'unzip {base_path}/test.zip')
+stdin, stdout, stderr=ssh.exec_command(f'unzip -o {base_path}/test.zip')
 lines = stdout.readlines()
-print(lines)
+lines
 
 # %%
 # build
 build_command = (
 	f"R CMD INSTALL --no-multiarch --with-keep.source {base_path}"
 )
+stdin, stdout, stderr=ssh.exec_command(build_command)
+lines = stdout.readlines()
+lines
 
 # %%
 # configuration
@@ -69,7 +77,7 @@ library(dplyr)
 # USER INPUTS
 #=======================
 # The folder where the study intermediate and result files will be written:
-outputFolder <- "{project}Results"
+outputFolder <- "Results"
 
 # Specify where the temporary files (used by the ff package) will be created:
 options(fftempdir = "./temp")
@@ -135,13 +143,17 @@ scp.put('temp_run.R',f'{base_path}/extras/')
 
 # %%
 # run Rscript
-stdin, stdout, stderr=ssh.exec_command(f'Rscript {base_path}/extras/temp_run.R')
+stdin, stdout, stderr=ssh.exec_command(f"Rscript {base_path}/extras/temp_run.R -e '{base_path}'")
 lines = stdout.readlines()
 print(lines)
+
+
+# %%
+scp.get(f'{base_path}/Results','.', recursive =True)
 
 # %%
 # 숙제 : 
 # 	다운로드 받은 패키지를 서버로 옮겨서 실행해서 결과까지 확인하는 코드 작성
-#	이전 시간에 작성한 Feedernet or ATLAS 코드와 이어지도록 코드 작성해서 순수 파이썬으로 패키지 다운받고 서버로 보내서 실행할 수 있도록 코드 작성
+#	이전 시간에 작성한 Feedernet or ATLAS 코드와 이어지도록 코드 작성해서 순수 파이썬으로 패키지 다운받고 서버로 보내서 실행해서 결과값 받을 수 있도록 코드 작성
 
 
