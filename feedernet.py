@@ -63,9 +63,47 @@ class Feedernet():
 
     def accept_licence(self):
         time.sleep(1)
+
         if [i for i in self.driver.find_elements(by=By.CLASS_NAME, value="btn-success") if i.text == 'Accept'] != []:
             [i for i in self.driver.find_elements(
                 by=By.CLASS_NAME, value="btn-success") if i.text == 'Accept'][0].click()
+
+    def search_concept(self, domain='Condition Occurrence', filter=1, target=None):
+        '''
+        target의 domain 찾아서 11개 tab으로 반환 쉽네 ㅎ
+        '''
+        newest_for_hospital = hospital_constant.newest_vocabulary[target]
+        location_url = hospital_constant.location_urls[target]
+        self.driver.get(
+            f"https://api.feedernet.co.kr/atlas/{location_url}/0/#/home")
+        time.sleep(3)
+        try:
+            self.driver.find_element(
+                By.CSS_SELECTOR, ".app__menu-item:nth-child(2) > .app__menu-title").click()
+        except Exception:
+            time.sleep(3)
+            self.accept_licence()
+            self.driver.find_element(
+                By.CSS_SELECTOR, ".app__menu-item:nth-child(2) > .app__menu-title").click()
+
+        self.accept_licence()
+        self.driver.find_element(
+            By.CSS_SELECTOR, ".app__menu-item:nth-child(2) > .app__menu-title").click()
+
+        dropdown = self.driver.find_element(
+            By.CSS_SELECTOR, ".row:nth-child(1) .form-control")
+        dropdown.find_element(
+            By.XPATH, f"//option[. = '{newest_for_hospital}']").click()
+
+        dropdown = self.driver.find_element(
+            By.CSS_SELECTOR, ".row:nth-child(2) .form-control")
+        dropdown.find_element(
+            By.XPATH, f"//option[. = '{domain}']").click()
+
+        self.driver.find_element(By.LINK_TEXT, "Table").click()
+        self.driver.find_element(By.CSS_SELECTOR, "input").clear()
+        self.driver.find_element(
+            By.CSS_SELECTOR, "input").send_keys(str(filter))
 
     def cohort_generation(self, cohort_definition, target=None, cohort_name=None):
         print(f'Cohort generation for {target}')

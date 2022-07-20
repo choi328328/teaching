@@ -31,7 +31,16 @@ if __name__ == '__main__':
                'SJMC_INCHEON',
                'GNUCH']
 
+    targets = ['AJOUMC',
+               'KHNMC',
+               'KDH',
+               'KWMC']
+
     for num, target in enumerate(targets):
         conncetor.new_tab(f'tab{num}')
-        conncetor.cohort_generation(cohort_definition=cohort_definition,
-                                    target=target, cohort_name=None)
+        conncetor.search_concept(
+            domain='Condition Occurrence', filter='Essential', target=target)
+    # for num, target in enumerate(targets):
+    #     conncetor.new_tab(f'tab{num}')
+    #     conncetor.cohort_generation(cohort_definition=cohort_definition,
+    #                                 target=target, cohort_name=None)

@@ -25,6 +25,23 @@ class hospital_constant:
         'SJMC_INCHEON': 3,
         'GNUCH': 2
     }
+    newest_vocabulary = {
+        'AJOUMC': 'AUMC_5.3.1_06',
+        'KHNMC': 'KHNMC_5.3.1_monthly',
+        'KDH': 'KDH_5.3.0_03',
+        'KWMC': 'KWMC_5.3.1_monthly',
+        'GNUH': 'GNUH_5.3.1_weekly',
+        'KHMC': 'KHMC_5.3.1_monthly',
+        'DCMC': 'DCMC_5.3.1_weekly',
+        'MJH': 'MJH_5.3.0_02',
+        'PNUH': 'PNUH_5.3.0_02',
+        'SJMC_BUCHEON': 'SEJONG_BCN_5.3.1_daily',
+        'WKUH': 'WKUH_5.3.1_weekly',
+        'EUMC': 'EUMC_5.3.1_weekly',
+        'SJMC_INCHEON': 'SEJONG_ICN_5.3.1_daily',
+        'GNUCH': 'GNUCH_5.3.1_01'
+    }
+
     location_urls = {
         'AJOUMC': 'v2.7.6/9/37',
         'KHNMC': 'v2.7.6/7/43',
