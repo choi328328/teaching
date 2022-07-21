@@ -13,6 +13,7 @@ from feedernet_constant import hospital_constant
 import datetime
 import time
 from selenium.webdriver.chrome.options import Options
+import pyperclip as pc
 
 
 def try_find(driver, by, name):
@@ -40,6 +41,7 @@ class Feedernet():
     def login(self, id='choi328328@ajou.ac.kr', pw='qwer1234!@', ):
         self.driver.get(self.url)
         self.driver.set_window_size(1600, 900)
+
         self.driver.find_element(By.CSS_SELECTOR, ".login span").click()
 
         self.driver.find_element(
@@ -137,14 +139,18 @@ class Feedernet():
             By.CSS_SELECTOR, ".input-group > .form-control").send_keys(cohort_name)  # cohort_name
         self.driver.find_element(By.LINK_TEXT, "Export").click()
         self.driver.find_element(By.LINK_TEXT, "JSON").click()
+        json_str = json.dumps(cohort_definition)
         self.driver.find_element(
             By.ID, "cohortExpressionJSON").clear()  # json text box
-        self.driver.find_element(By.ID, "cohortExpressionJSON").send_keys(
-            json.dumps(cohort_definition))
+        self.driver.find_element(By.ID, "cohortExpressionJSON").click()
+        self.driver.execute_script(
+            f'''document.getElementById('cohortExpressionJSON').value='{json_str}';''')
         while self.driver.find_element(By.ID, "cohortExpressionJSON").get_attribute("value") == '':
             time.sleep(1)
         self.driver.find_element(
             By.CSS_SELECTOR, ".col-md-6:nth-child(2) > .btn").click()  # reload
+        while json_str == self.driver.find_element(By.ID, "cohortExpressionJSON").get_attribute("value"):
+            time.sleep(1)
         time.sleep(1)
         self.driver.find_element(By.LINK_TEXT, "Definition").click()
 
