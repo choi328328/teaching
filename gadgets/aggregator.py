@@ -1,23 +1,8 @@
-"""
-Requirement : metafor package in R
-
-입력 : --inpath --outpath
-
-해당 폴더 내의 zipfile들 읽어서...거기서 원하는 파일들 얻음
-
-그림으로 제작함.
-
-html or PDF로 출력
-
-"""
-
-
+# R에서 metafor 패키지 설치해야함.
 import matplotlib.pyplot as plt
 import pandas as pd
-import seaborn as sns
 import zipfile
 import os
-import PythonMeta as PMA
 from rpy2.robjects import r
 from pretty_html_table import build_table
 from pdf2image import convert_from_path
@@ -35,18 +20,57 @@ parser.add_argument(
     default=None,
     help="Add analysis for meta-analysis outside of zipfiles",
 )  # source, target_outcome, target_negative, comparator_outcome, comparator_negative
+parser.add_argument(
+    "--dpi",
+    default=100,
+    type=int,
+    help="Add analysis for meta-analysis outside of zipfiles",
+)  # source, target_outcome, target_negative, comparator_outcome, comparator_negative
 
 args = parser.parse_args()
 
-# TODO :  temp
 os.chdir(
     "/Users/choibyungjin/Library/CloudStorage/OneDrive-아주대학교/study/teaching/gadgets"
 )
-
 os.makedirs("./results", exist_ok=True)
 
 
-def ple_aggregation(inpath, add_analysis):
+def get_datas(inpath, source):
+    my_zip = zipfile.ZipFile(os.path.join(inpath, f"{source}.zip"))
+    negative_path = [
+        i for i in my_zip.namelist() if i.endswith("negative_control_outcome.csv")
+    ][0]
+    covariate_path = [
+        i for i in my_zip.namelist() if i.endswith("covariate_balance.csv")
+    ][0]
+    km_path = [i for i in my_zip.namelist() if i.endswith("kaplan_meier_dist.csv")][0]
+    method_result_path = [
+        i for i in my_zip.namelist() if i.endswith("cohort_method_result.csv")
+    ][0]
+    attrition_path = [i for i in my_zip.namelist() if i.endswith("attrition.csv")][0]
+    ps_path = [i for i in my_zip.namelist() if i.endswith("preference_score_dist.csv")][
+        0
+    ]
+
+    negative_outcome = pd.read_csv(my_zip.open(negative_path))
+    cohort_results = pd.read_csv(my_zip.open(method_result_path))
+    cohort_results["source"] = source
+    covariate_balance = pd.read_csv(my_zip.open(covariate_path))
+    km_dist = pd.read_csv(my_zip.open(km_path))
+    attrition = pd.read_csv(my_zip.open(attrition_path))
+    attrition["source"] = source
+    attrition["cohort"] = attrition.apply(
+        lambda x: "target" if x["exposure_id"] == x["target_id"] else "comparator",
+        axis=1,
+    )
+    ps_dist = pd.read_csv(my_zip.open(ps_path))
+    
+    return negative_outcome, cohort_results, covariate_balance, km_dist, attrition, ps_dist
+    
+
+
+
+def ple_aggregation(inpath, add_analysis, dpi):
     sources = [i.split(".zip")[0] for i in os.listdir(inpath) if i.endswith(".zip")]
     negative_dict, results_dict, covariate_dict, km_dict, attrition_dict, ps_dict = (
         {},
@@ -90,7 +114,9 @@ def ple_aggregation(inpath, add_analysis):
             axis=1,
         )
         ps_dist = pd.read_csv(my_zip.open(ps_path))
+        negative_outcome, cohort_results, covariate_balance, km_dist, attrition, ps_dist = get_datas(inpath, source)
 
+        
         negative_dict[source] = negative_outcome
         results_dict[source] = cohort_results.round(3)
         covariate_dict[source] = covariate_balance
@@ -152,7 +178,8 @@ def ple_aggregation(inpath, add_analysis):
                         "comparator_subjects": int(anal[4]),
                         "target_outcomes": int(anal[1]),
                         "comparator_outcomes": int(anal[3]),
-                    }
+                    },
+                    index=[0],
                 )
             )
     results["target_no_outcomes"] = (
@@ -168,7 +195,7 @@ def ple_aggregation(inpath, add_analysis):
         """
     library(metafor)
     tt= read.csv('./results/temp_results.csv')
-    data1= escalc(measure='RR',ai=target_outcomes, bi=target_subjects, ci=comparator_outcomes, di=comparator_subjects, data=tt, append=TRUE)
+    data1= escalc(measure='RR',ai=target_outcomes, bi=target_no_outcomes, ci=comparator_outcomes, di=comparator_no_outcomes, data=tt, append=TRUE)
     res1 <- rma(yi, vi, data = data1, digits = 3)
     res2 <- rma(yi, vi, data=data1, digits=3, method="FE")
 
@@ -232,7 +259,7 @@ def ple_aggregation(inpath, add_analysis):
         axes[coord].legend(loc="upper center", frameon=False)
         axes[coord].set_title(source, size=20)
     fig1.tight_layout()
-    fig1.savefig("./results/ps_density.png", dpi=100)
+    fig1.savefig("./results/ps_density.png", dpi=dpi)
 
     #####
     fig2, axes = plt.subplots(
@@ -259,7 +286,7 @@ def ple_aggregation(inpath, add_analysis):
         axes[coord].plot([0, 1], linestyle="--", color=(0.3, 0.3, 0.3))
         axes[coord].set_title(source, size=20)
     fig2.tight_layout()
-    fig2.savefig("./results/cov_bal.png", dpi=100)
+    fig2.savefig("./results/cov_bal.png", dpi=dpi)
 
     ####
     fig3, axes = plt.subplots(
@@ -299,7 +326,7 @@ def ple_aggregation(inpath, add_analysis):
         axes[coord].legend(frameon=False)
         axes[coord].set_title(source, size=20)
     fig3.tight_layout()
-    fig3.savefig("./results/km_plot.png", dpi=100)
+    fig3.savefig("./results/km_plot.png", dpi=dpi)
 
     ###
     fig4, axes = plt.subplots(1, 2, figsize=(30, 15), facecolor="white")
@@ -317,7 +344,7 @@ def ple_aggregation(inpath, add_analysis):
     axes[1].imshow(img2)
     axes[1].axis("off")
     fig4.tight_layout()
-    fig4.savefig("./results/forest_plot.png", dpi=100)
+    fig4.savefig("./results/forest_plot.png", dpi=dpi)
 
     page_title_text = "My report"
     title_text = "PLE"
@@ -330,12 +357,6 @@ def ple_aggregation(inpath, add_analysis):
     aa = attritions.reset_index()
     aa.columns = list(aa.columns)
 
-    forest_fixed_uri = base64.b64encode(
-        open("./results/forest_fixed.png", "rb").read()
-    ).decode("utf-8")
-    forest_random_uri = base64.b64encode(
-        open("./results/forest_random.png", "rb").read()
-    ).decode("utf-8")
     forest_plot_uri = base64.b64encode(
         open("./results/forest_plot.png", "rb").read()
     ).decode("utf-8")
@@ -360,7 +381,7 @@ def ple_aggregation(inpath, add_analysis):
                 <p>{text}</p>
                 
                 <h2>{results_text}</h2>
-                {build_table(results, 'blue_light')}
+                {build_table(results.query('outcome_id != -999 '), 'blue_light')}
                 <h2>Forest plot</h2>
                 <img src="data:image/png;base64,{forest_plot_uri}" width="1100"> 
                 
@@ -386,6 +407,9 @@ def ple_aggregation(inpath, add_analysis):
 
 
 if __name__ == "__main__":
-    ple_aggregation(args.inpath, args.add_analysis)
+    # 외부 혹은 다른 논문에서 분석된 자료를 함께 meta-analysis하기 위해서...add_analysis 사용
+    add_analysis = [("smc", 132, 10000, 500, 10000)]
+
+    ple_aggregation(inpath=args.inpath, add_analysis=add_analysis, dpi=args.dpi)
     print("DONE!!!!!")
 
