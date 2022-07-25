@@ -1,0 +1,2 @@
+"target_id","comparator_id","outcome_id","analysis_id","target_min_days","target_p10_days","target_p25_days","target_median_days","target_p75_days","target_p90_days","target_max_days","comparator_min_days","comparator_p10_days","comparator_p25_days","comparator_median_days","comparator_p75_days","comparator_p90_days","comparator_max_days","database_id"
+3913,3912,3269,1,31,154,336,336,336,336,336,31,167,336,336,336,336,336,"cdmpv532_220131"

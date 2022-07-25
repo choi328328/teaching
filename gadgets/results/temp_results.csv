@@ -1,0 +1,3 @@
+,source,target_id,comparator_id,outcome_id,rr,ci_95_lb,ci_95_ub,p,target_subjects,comparator_subjects,target_outcomes,comparator_outcomes,target_no_outcomes,comparator_no_outcomes
+0,DCMC,3913,3912,3269,0.925,0.696,1.215,0.583,3029,9834,72,226,2957,9608
+0,Resultscdmpv532_220131,3913,3912,3269,0.761,0.551,1.034,0.089,1285,4419,56,203,1229,4216
