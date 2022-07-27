@@ -1,9 +1,0 @@
-"database_id","exposure_id","target_id","comparator_id","outcome_id","analysis_id","sequence_number","description","subjects"
-"cdmpv532_220131",3913,3913,3912,3269,1,1,"Original cohorts",1390
-"cdmpv532_220131",3913,3913,3912,3269,1,2,"First exp. only & 180 days of obs. prior",1390
-"cdmpv532_220131",3913,3913,3912,3269,1,3,"Have at least 30 days at risk",1297
-"cdmpv532_220131",3913,3913,3912,3269,1,4,"Matched on propensity score",1285
-"cdmpv532_220131",3912,3913,3912,3269,1,1,"Original cohorts",47091
-"cdmpv532_220131",3912,3913,3912,3269,1,2,"First exp. only & 180 days of obs. prior",47091
-"cdmpv532_220131",3912,3913,3912,3269,1,3,"Have at least 30 days at risk",40354
-"cdmpv532_220131",3912,3913,3912,3269,1,4,"Matched on propensity score",4419
