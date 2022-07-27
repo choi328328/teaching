@@ -1,1 +1,8 @@
 */*.yaml
+*/*.pdf
+*/*.png
+*/*.zip
+*/*.html
+*/*.log
+*/*.rds
+*/data*
