@@ -34,9 +34,9 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-os.chdir(
-    "/Users/choibyungjin/Library/CloudStorage/OneDrive-아주대학교/study/teaching/aggregator"
-)
+# os.chdir(
+#     "/Users/choibyungjin/Library/CloudStorage/OneDrive-아주대학교/study/teaching/aggregator"
+# )
 os.makedirs("./results", exist_ok=True)
 
 
@@ -45,6 +45,9 @@ if __name__ == "__main__":
     # target subject, target_outcome, comparator_subject, comparator_outcome
     # add_analysis = [("Samsung", 7839, 1746, 7839, 1558, 0, 0, 0)]
     add_analysis = False
+    args.inpath = (
+        "/Users/choibyungjin/Library/CloudStorage/OneDrive-아주대학교/data/ent_5yr"
+    )
 
     ple_aggregation(
         inpath=args.inpath,

@@ -56,9 +56,7 @@ def get_data_from_sources(inpath, sources):
     source_errors = []
     # get data from zipfiles
     for source in sources:
-
         try:
-
             (
                 negative_outcome,
                 cohort_results,
@@ -93,8 +91,12 @@ def get_data_from_sources(inpath, sources):
 
 
 def draw_ps(ps_dict, sources, target_id, comparator_id, outcome_id):
+    sources = [source for source in sources if len(ps_dict[source]) > 0]
     fig, axes = plt.subplots(
-        (len(sources) // 3), 3, figsize=(16, 1.5 * len(sources)), facecolor="white"
+        len(sources) // 3+1,
+        3,
+        figsize=(16, 1.5 * len(sources)),
+        facecolor="white",
     )
     for num, source in enumerate(sources):
         ps_score = (
@@ -102,7 +104,7 @@ def draw_ps(ps_dict, sources, target_id, comparator_id, outcome_id):
             .query("target_id == @target_id and comparator_id == @comparator_id")
             .copy()
         )
-        coord = (num // 3, num % 3) if len(sources) // 3 > 1 else num % 3
+        coord = (num // 3, num % 3) if len(sources) // 3 >= 1 else num % 3
         axes[coord].plot(
             ps_score["preference_score"],
             ps_score["target_density"],
@@ -140,11 +142,16 @@ def draw_ps(ps_dict, sources, target_id, comparator_id, outcome_id):
 
 
 def draw_cov_bal(covariate_dict, sources, target_id, comparator_id, outcome_id):
+    sources = [source for source in sources if len(covariate_dict[source]) > 0]
     fig, axes = plt.subplots(
-        (len(sources) // 3), 3, figsize=(16, 1.5 * len(sources)), facecolor="white",
+        len(sources) // 3 +1,
+        3,
+        figsize=(16, 1.5 * len(sources)),
+        facecolor="white",
     )
+    
     for num, source in enumerate(sources):
-        coord = (num // 3, num % 3) if len(sources) // 3 > 1 else num % 3
+        coord = (num // 3, num % 3) if len(sources) // 3 >= 1 else num % 3
         cov_bal = (
             covariate_dict[source]
             .query(
@@ -176,13 +183,16 @@ def draw_cov_bal(covariate_dict, sources, target_id, comparator_id, outcome_id):
 
 
 def draw_raw_km_plot(km_pop_dict, sources):
-
+    sources = [source for source in sources if len(km_pop_dict[source]) > 0]
     fig, axes = plt.subplots(
-        (len(sources) // 3), 3, figsize=(16, 1.5 * len(sources)), facecolor="white"
+        len(sources) // 3 +1,
+        3,
+        figsize=(16, 1.5 * len(sources)),
+        facecolor="white",
     )
-
+    
     for num, source in enumerate(sources):
-        coord = (num // 3, num % 3) if len(sources) // 3 > 1 else num % 3
+        coord = (num // 3, num % 3) if len(sources) // 3 >= 1 else num % 3
         km_pop = km_pop_dict[source]
         df_treat, df_nontreat = (
             km_pop.query("treatment==1"),
@@ -209,11 +219,16 @@ def draw_raw_km_plot(km_pop_dict, sources):
 
 
 def draw_km_plot(km_dict, sources, target_id, comparator_id, outcome_id):
+    sources = [source for source in sources if len(km_dict[source]) > 0]
     fig, axes = plt.subplots(
-        (len(sources) // 3), 3, figsize=(24, 1.5 * len(sources)), facecolor="white"
+        len(sources) // 3 +1,
+        3,
+        figsize=(24, 1.5 * len(sources)),
+        facecolor="white",
     )
+    
     for num, source in enumerate(sources):
-        coord = (num // 3, num % 3) if len(sources) // 3 > 1 else num % 3
+        coord = (num // 3, num % 3) if len(sources) // 3 >= 1 else num % 3
         km_dist = (
             km_dict[source]
             .query(
@@ -546,7 +561,8 @@ def ple_aggregation(
                 """
         outpath = f"report_t{target_id}_c{comparator_id}_o{outcome_id}.html"
         logger.info(f"{text}to {outpath}")
-
+        os.makedirs(inpath.split("/")[-1], exist_ok=True)
+        outpath = inpath.split("/")[-1] + "/" + outpath
         make_html(
             title=title,
             text=text,
