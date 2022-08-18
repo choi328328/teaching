@@ -7,13 +7,47 @@ from pretty_html_table import build_table
 from pdf2image import convert_from_path
 import base64
 from PIL import Image
-import argparse
 from agg_constants import aggConstants
 from lifelines import KaplanMeierFitter
 from loguru import logger
 import pyreadr
-
-
+from pathlib import Path
+import shutil
+import re
+import traceback
+def get_stratpop(inpath, source):
+    
+    inpath =Path(inpath)
+    shutil.rmtree(inpath / 'script', ignore_errors=True)
+    my_zip = zipfile.ZipFile(inpath/f"{source}.zip")
+    my_zip.extractall(inpath)
+    refer_path = [i for i in my_zip.namelist() if i.endswith("outcomeModelReference.rds")][0]
+    refer = pyreadr.read_r(str(inpath / refer_path))[None].query('strataFile != "" ')
+    refer_values=refer[['analysisId','targetId','comparatorId','outcomeId','strataFile']].values
+    src, t, c, o, a = [], [], [], [], []
+    t_counts, c_counts, t_o_counts, c_o_counts = [], [], [], []
+    for a_id, t_id, c_id,o_id, pop_name in refer_values:
+        src.append(source)
+        t.append(t_id)
+        c.append(c_id)
+        o.append(o_id)
+        a.append(a_id)
+        pop = pyreadr.read_r(str(inpath /'script/extras/result/cmOutput'/ pop_name))[None]
+        t_counts.append(len(pop.query('treatment == 1')))
+        c_counts.append(len(pop.query('treatment == 0')))
+        t_o_counts.append(len(pop.query('treatment == 1 & outcomeCount == 1')))
+        c_o_counts.append(len(pop.query('treatment == 0 & outcomeCount == 1')))
+    shutil.rmtree(inpath / 'script')
+    return pd.DataFrame({'source':src,
+                        'target_id': t,
+                         'comparator_id': c, 
+                         'outcome_id': o, 
+                         'analysis_id':a,
+                         'target_subjects': t_counts, 
+                         'comparator_subjects': c_counts, 
+                         'target_outcomes': t_o_counts, 
+                         'comparator_outcomes': c_o_counts})
+    
 def get_data(inpath, source):
     my_zip = zipfile.ZipFile(os.path.join(inpath, f"{source}.zip"))
     csv_names = [
@@ -26,7 +60,7 @@ def get_data(inpath, source):
     ]
     paths = [
         [i for i in my_zip.namelist() if i.endswith(csv_name)][0]
-        for csv_name in csv_names
+        for csv_name in csv_names if len([i for i in my_zip.namelist() if i.endswith(csv_name)]) != 0
     ]
 
     negative_outcome, covariate_balance, km_dist, cohort_results, attrition, ps_dist = (
@@ -38,6 +72,7 @@ def get_data(inpath, source):
         lambda x: "target" if x["exposure_id"] == x["target_id"] else "comparator",
         axis=1,
     )
+    strat_pop=get_stratpop(inpath, source)
 
     return (
         negative_outcome,
@@ -46,12 +81,13 @@ def get_data(inpath, source):
         km_dist,
         attrition,
         ps_dist,
+        strat_pop
     )
 
 
 def get_data_from_sources(inpath, sources):
-    negative_dict, results_dict, covariate_dict, km_dict, attrition_dict, ps_dict = (
-        {} for _ in range(6)
+    negative_dict, results_dict, covariate_dict, km_dict, attrition_dict, ps_dict, strat_dict = (
+        {} for _ in range(7)
     )
     source_errors = []
     # get data from zipfiles
@@ -64,6 +100,7 @@ def get_data_from_sources(inpath, sources):
                 km_dist,
                 attrition,
                 ps_dist,
+                strat_pop
             ) = get_data(inpath, source)
 
             negative_dict[source] = negative_outcome
@@ -72,8 +109,10 @@ def get_data_from_sources(inpath, sources):
             km_dict[source] = km_dist
             attrition_dict[source] = attrition
             ps_dict[source] = ps_dist
+            strat_dict[source] = strat_pop
             logger.info(f"{source} extracted")
         except Exception:
+            traceback.print_exc()
             logger.warning(f"{source} not found")
             source_errors.append(source)
     for source in source_errors:
@@ -86,11 +125,12 @@ def get_data_from_sources(inpath, sources):
         km_dict,
         attrition_dict,
         ps_dict,
+        strat_dict,
         sources,
     )
 
 
-def draw_ps(ps_dict, sources, target_id, comparator_id, outcome_id):
+def draw_ps(ps_dict, sources, target_id, comparator_id, outcome_id, analysis_id):
     sources = [source for source in sources if len(ps_dict[source]) > 0]
     fig, axes = plt.subplots(
         len(sources) // 3+1,
@@ -101,7 +141,7 @@ def draw_ps(ps_dict, sources, target_id, comparator_id, outcome_id):
     for num, source in enumerate(sources):
         ps_score = (
             ps_dict[source]
-            .query("target_id == @target_id and comparator_id == @comparator_id")
+            .query("target_id == @target_id and comparator_id == @comparator_id  and analysis_id == @analysis_id")
             .copy()
         )
         coord = (num // 3, num % 3) if len(sources) // 3 >= 1 else num % 3
@@ -141,7 +181,7 @@ def draw_ps(ps_dict, sources, target_id, comparator_id, outcome_id):
     return fig
 
 
-def draw_cov_bal(covariate_dict, sources, target_id, comparator_id, outcome_id):
+def draw_cov_bal(covariate_dict, sources, target_id, comparator_id, outcome_id, analysis_id):
     sources = [source for source in sources if len(covariate_dict[source]) > 0]
     fig, axes = plt.subplots(
         len(sources) // 3 +1,
@@ -155,7 +195,7 @@ def draw_cov_bal(covariate_dict, sources, target_id, comparator_id, outcome_id):
         cov_bal = (
             covariate_dict[source]
             .query(
-                "target_id == @target_id and comparator_id == @comparator_id and outcome_id == @outcome_id"
+                "target_id == @target_id and comparator_id == @comparator_id and outcome_id == @outcome_id  and analysis_id == @analysis_id"
             )
             .copy()
         )
@@ -218,7 +258,7 @@ def draw_raw_km_plot(km_pop_dict, sources):
     return fig
 
 
-def draw_km_plot(km_dict, sources, target_id, comparator_id, outcome_id):
+def draw_km_plot(km_dict, sources, target_id, comparator_id, outcome_id, analysis_id):
     sources = [source for source in sources if len(km_dict[source]) > 0]
     fig, axes = plt.subplots(
         len(sources) // 3 +1,
@@ -232,7 +272,7 @@ def draw_km_plot(km_dict, sources, target_id, comparator_id, outcome_id):
         km_dist = (
             km_dict[source]
             .query(
-                "target_id == @target_id and comparator_id == @comparator_id and outcome_id == @outcome_id"
+                "target_id == @target_id and comparator_id == @comparator_id and outcome_id == @outcome_id  and analysis_id == @analysis_id"
             )
             .copy()
         )
@@ -371,7 +411,14 @@ def get_cohort_name(inpath, source):
         i for i in my_zip.namelist() if i.endswith("CohortCounts.csv")
     ][0]
     cohort_df = pd.read_csv(my_zip.open(cohort_count_path))
-    return dict(zip(cohort_df.cohortDefinitionId, cohort_df.cohortName))
+    analysis_summ_path = [
+        i for i in my_zip.namelist() if i.endswith("analysisSummary.csv")
+    ][0]
+    anal_summary = pd.read_csv(my_zip.open(analysis_summ_path))[['analysisId','analysisDescription']].drop_duplicates()
+    final_dict = {**dict(zip(cohort_df.cohortDefinitionId, cohort_df.cohortName)),
+                  'analysis':dict(zip(anal_summary.analysisId, anal_summary.analysisDescription))}
+    
+    return final_dict
 
 
 def ple_aggregation(
@@ -396,6 +443,7 @@ def ple_aggregation(
         km_dict,
         attrition_dict,
         ps_dict,
+        strat_dict,
         sources,  # after remove error sources
     ) = get_data_from_sources(inpath, sources)
 
@@ -409,11 +457,11 @@ def ple_aggregation(
     ]
 
     # get study population
-    tco_id = (
-        results[["target_id", "comparator_id", "outcome_id"]].drop_duplicates().values
+    tcoa_id = (
+        results[["target_id", "comparator_id", "outcome_id",'analysis_id']].drop_duplicates().values
     )
     # if target, comparator, outcome are not specified, use the first one
-    for target_id, comparator_id, outcome_id in tco_id:
+    for target_id, comparator_id, outcome_id, analysis_id in tcoa_id:
         logger.info(
             f"target_id: {target_id}, comparator_id: {comparator_id}, outcome_id: {outcome_id}"
         )
@@ -431,6 +479,7 @@ def ple_aggregation(
                             "target_id": add_t,
                             "comparator_id": add_c,
                             "outcome_id": add_o,
+                            "analysis_id" :1,
                             "rr": 1,
                             "ci_95_lb": 0,
                             "ci_95_ub": 1,
@@ -445,7 +494,7 @@ def ple_aggregation(
                 )
 
         results_filter = results.query(
-            "target_id == @target_id and comparator_id == @comparator_id and outcome_id == @outcome_id"
+            "target_id == @target_id and comparator_id == @comparator_id and outcome_id == @outcome_id and analysis_id == @analysis_id"
         ).copy()
 
         if km_method == "raw":
@@ -468,7 +517,7 @@ def ple_aggregation(
 
         # get non significants rate of negative outcomes
         results_cated = results_cated.query(
-            " target_id == @target_id & comparator_id == @comparator_id "
+            " target_id == @target_id & comparator_id == @comparator_id and analysis_id == @analysis_id "
         )
         negative_cated = results_cated[results_cated["outcome_id"].isin(negative_ids)]
         negatives_nonsig = pd.DataFrame(
@@ -484,14 +533,19 @@ def ple_aggregation(
         )
 
         # get attrition dataframe
+
         attrition_cated = pd.concat(attrition_dict.values())
         attrition_cated = attrition_cated.query(
-            "target_id == @target_id & comparator_id == @comparator_id & outcome_id == @outcome_id"
+            "target_id == @target_id & comparator_id == @comparator_id & outcome_id == @outcome_id and analysis_id == @analysis_id"
         )
         attritions = attrition_cated.pivot(
-            index=["source", "cohort",], columns="description", values="subjects"
+            index=["source", "cohort"], columns="description", values="subjects"
         )
 
+        results_filter = results_filter.dropna(subset=["rr"])
+
+        # if row in results have abnormal values...warn about source
+        
         results_filter.loc[:, "target_no_outcomes"] = (
             results_filter.loc[:, "target_subjects"]
             - results_filter.loc[:, "target_outcomes"]
@@ -500,9 +554,6 @@ def ple_aggregation(
             results_filter.loc[:, "comparator_subjects"]
             - results_filter.loc[:, "comparator_outcomes"]
         )
-        results_filter = results_filter.dropna(subset=["rr"])
-
-        # if row in results have abnormal values...warn and get rid of source
         check_cols = [
             "target_subjects",
             "comparator_subjects",
@@ -523,28 +574,41 @@ def ple_aggregation(
         if len(results_filter) == 0:
             continue
 
-        # temporary save for using R metafor packages
-        results_filter.to_csv("./results/temp_results.csv")
-
+        # temporary sav start_pop for using R metafor packages
+        strat_df=pd.concat(strat_dict.values())
+        strat_df=strat_df.query(
+            "target_id == @target_id and comparator_id == @comparator_id and outcome_id == @outcome_id and analysis_id == @analysis_id"
+        ).copy()
+        
+        strat_df.loc[:, "target_no_outcomes"] = (
+            strat_df.loc[:, "target_subjects"]
+            - strat_df.loc[:, "target_outcomes"]
+        )
+        strat_df.loc[:, "comparator_no_outcomes"] = (
+            strat_df.loc[:, "comparator_subjects"]
+            - strat_df.loc[:, "comparator_outcomes"]
+        )
+        
+        strat_df.to_csv("./results/temp_results.csv")
         # use R metafor packages to get meta-analysis
         # metafor is selected of crenditality of results and aesthetics of plots
         r(aggConstants.metafor_script)
 
         # Illustrate PS distribution
-        ps_fig = draw_ps(ps_dict, sources, target_id, comparator_id, outcome_id)
+        ps_fig = draw_ps(ps_dict, sources, target_id, comparator_id, outcome_id, analysis_id)
         ps_fig.savefig("./results/ps_density.png", dpi=dpi)
 
         # Illustrate covariate balance
         cov_bal_fig = draw_cov_bal(
-            covariate_dict, sources, target_id, comparator_id, outcome_id
+            covariate_dict, sources, target_id, comparator_id, outcome_id, analysis_id
         )
         cov_bal_fig.savefig("./results/cov_bal.png", dpi=dpi)
 
         # Illustrate KM distribution
-        km_fig = draw_km_plot(km_dict, sources, target_id, comparator_id, outcome_id)
+        km_fig = draw_km_plot(km_dict, sources, target_id, comparator_id, outcome_id, analysis_id)
         km_fig.savefig("./results/km_plot.png", dpi=dpi)
 
-        if km_method == "raw":
+        if km_method == "raw": 
             km_raw_fig = draw_raw_km_plot(km_pop_dict, sources)
             km_raw_fig.savefig("./results/km_raw_plot.png", dpi=dpi)
 
@@ -558,8 +622,9 @@ def ple_aggregation(
                 target: {cohort_name_dict[target_id]}, \n
                 Comparator : {cohort_name_dict[comparator_id]}, \n
                 Outcome : {cohort_name_dict[outcome_id]}, \n
+                Analysis : {cohort_name_dict['analysis'][analysis_id]}, \n
                 """
-        outpath = f"report_t{target_id}_c{comparator_id}_o{outcome_id}.html"
+        outpath = f"report_t{target_id}_c{comparator_id}_o{outcome_id}_a{analysis_id}.html"
         logger.info(f"{text}to {outpath}")
         os.makedirs(inpath.split("/")[-1], exist_ok=True)
         outpath = inpath.split("/")[-1] + "/" + outpath

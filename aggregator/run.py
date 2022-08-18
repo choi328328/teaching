@@ -46,9 +46,10 @@ if __name__ == "__main__":
     # add_analysis = [("Samsung", 7839, 1746, 7839, 1558, 0, 0, 0)]
     add_analysis = False
     args.inpath = (
-        "/Users/choibyungjin/Library/CloudStorage/OneDrive-아주대학교/data/ent_5yr"
+        "/Users/choibyungjin/Library/CloudStorage/OneDrive-아주대학교/data/CTcont"
     )
-
+    os.chdir("/Users/choibyungjin/Library/CloudStorage/OneDrive-아주대학교/study/teaching/aggregator")
+    logger.add("./log.log")
     ple_aggregation(
         inpath=args.inpath,
         title=args.title,
