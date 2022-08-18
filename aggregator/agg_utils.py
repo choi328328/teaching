@@ -2,7 +2,6 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import zipfile
 import os
-from rpy2.robjects import r
 from pretty_html_table import build_table
 from pdf2image import convert_from_path
 import base64
@@ -568,7 +567,7 @@ def ple_aggregation(
                 if row[col] <= 0:
                     logger.warning(f"{row['source']} has non-positive value in {col} ")
                     error_source.append(row["source"])
-        results_filter = results_filter[~results_filter["source"].isin(error_source)]
+        results_filter = results_filter[~results_filter["source"].isin(error_source)].sort_values('source')
         sources = results_filter.source.unique().tolist()
 
         if len(results_filter) == 0:
@@ -589,10 +588,11 @@ def ple_aggregation(
             - strat_df.loc[:, "comparator_outcomes"]
         )
         
-        strat_df.to_csv("./results/temp_results.csv")
+        strat_df.sort_values('source').to_csv("./results/temp_results.csv")
         # use R metafor packages to get meta-analysis
         # metafor is selected of crenditality of results and aesthetics of plots
-        r(aggConstants.metafor_script)
+        os.system('Rscript metafor_script.R')
+        (aggConstants.metafor_script)
 
         # Illustrate PS distribution
         ps_fig = draw_ps(ps_dict, sources, target_id, comparator_id, outcome_id, analysis_id)
