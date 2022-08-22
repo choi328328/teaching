@@ -139,7 +139,7 @@ class Feedernet():
             By.CSS_SELECTOR, ".input-group > .form-control").send_keys(cohort_name)  # cohort_name
         self.driver.find_element(By.LINK_TEXT, "Export").click()
         self.driver.find_element(By.LINK_TEXT, "JSON").click()
-        json_str = json.dumps(cohort_definition)
+        json_str = json.dumps(cohort_definition, indent=4)
         self.driver.find_element(
             By.ID, "cohortExpressionJSON").clear()  # json text box
         self.driver.find_element(By.ID, "cohortExpressionJSON").click()

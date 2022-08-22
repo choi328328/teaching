@@ -4,7 +4,7 @@ import os
 import argparse
 from loguru import logger
 from agg_utils import ple_aggregation
-
+from pathlib import Path
 plt.rcParams["axes.facecolor"] = "white"
 plt.rcParams["savefig.facecolor"] = "white"
 
@@ -31,6 +31,11 @@ parser.add_argument(
     default="adjusted",  # 'raw' or 'adjusted'
     help="Add analysis for meta-analysis outside of zipfiles",
 )
+parser.add_argument(
+    "--only_main",
+    default=False,  # 'raw' or 'adjusted'
+    help="Only show main results",
+)
 
 args = parser.parse_args()
 
@@ -45,17 +50,21 @@ if __name__ == "__main__":
     # target subject, target_outcome, comparator_subject, comparator_outcome
     # add_analysis = [("Samsung", 7839, 1746, 7839, 1558, 0, 0, 0)]
     add_analysis = False
-    args.inpath = (
-        "/Users/choibyungjin/Library/CloudStorage/OneDrive-아주대학교/data/CTcont"
-    )
-    os.chdir("/Users/choibyungjin/Library/CloudStorage/OneDrive-아주대학교/study/teaching/aggregator")
-    logger.add("./log.log")
-    ple_aggregation(
-        inpath=args.inpath,
-        title=args.title,
-        add_analysis=add_analysis,
-        dpi=args.dpi,
-        km_method=args.km_method,
-    )
-    logger.info("DONE!!!!!")
+    
+    base_path="/Users/choibyungjin/Library/CloudStorage/OneDrive-아주대학교/data/noncardiac/"
+    paces = ['noncardiac_pace', 'noncardiac_pace_demo','noncardiac_pace_cond','noncardiac_pace_elder']
+    for pace in paces :
+        args.inpath = str(
+            base_path + pace
+        )
+        os.chdir("/Users/choibyungjin/Library/CloudStorage/OneDrive-아주대학교/study/teaching/aggregator")
+        logger.add("./log.log")
+        ple_aggregation(
+            inpath=args.inpath,
+            title=args.title,
+            add_analysis=add_analysis,
+            dpi=args.dpi,
+            km_method='raw',
+        )
+        logger.info("DONE!!!!!")
 

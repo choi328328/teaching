@@ -61,9 +61,10 @@ def get_data(inpath, source):
         [i for i in my_zip.namelist() if i.endswith(csv_name)][0]
         for csv_name in csv_names if len([i for i in my_zip.namelist() if i.endswith(csv_name)]) != 0
     ]
-
+    strat_pop=get_stratpop(inpath, source)
+    
     negative_outcome, covariate_balance, km_dist, cohort_results, attrition, ps_dist = (
-        pd.read_csv(my_zip.open(p)) for p in paths
+        pd.read_csv(my_zip.open(p)) for p in paths 
     )
     cohort_results["source"] = source
     attrition["source"] = source
@@ -71,7 +72,6 @@ def get_data(inpath, source):
         lambda x: "target" if x["exposure_id"] == x["target_id"] else "comparator",
         axis=1,
     )
-    strat_pop=get_stratpop(inpath, source)
 
     return (
         negative_outcome,
@@ -82,7 +82,6 @@ def get_data(inpath, source):
         ps_dist,
         strat_pop
     )
-
 
 def get_data_from_sources(inpath, sources):
     negative_dict, results_dict, covariate_dict, km_dict, attrition_dict, ps_dict, strat_dict = (
@@ -245,6 +244,7 @@ def draw_raw_km_plot(km_pop_dict, sources):
             label="target",
         )
         axes[coord] = kmf.plot_survival_function(ax=axes[coord], title=source)
+        
 
         kmf.fit(
             df_nontreat["survivalTime"],
@@ -252,6 +252,8 @@ def draw_raw_km_plot(km_pop_dict, sources):
             label="comparator",
         )
         axes[coord] = kmf.plot_survival_function(ax=axes[coord])
+        axes[coord].set_xlabel("Time in days")
+        axes[coord].set_ylabel("Survival probability")
         # axes[coord].set_title(source, size=20)
     fig.tight_layout()
     return fig
@@ -592,7 +594,7 @@ def ple_aggregation(
         # use R metafor packages to get meta-analysis
         # metafor is selected of crenditality of results and aesthetics of plots
         os.system('Rscript metafor_script.R')
-        (aggConstants.metafor_script)
+        #(aggConstants.metafor_script)
 
         # Illustrate PS distribution
         ps_fig = draw_ps(ps_dict, sources, target_id, comparator_id, outcome_id, analysis_id)
