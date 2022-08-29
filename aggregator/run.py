@@ -47,24 +47,21 @@ os.makedirs("./results", exist_ok=True)
 
 if __name__ == "__main__":
     # 외부 혹은 다른 논문에서 분석된 자료를 함께 meta-analysis하기 위해서...add_analysis 사용
-    # target subject, target_outcome, comparator_subject, comparator_outcome
+    # target subject, comparator_subject, target_outcome, comparator_outcome, t,c, o_id
     # add_analysis = [("Samsung", 7839, 1746, 7839, 1558, 0, 0, 0)]
-    add_analysis = False
+    add_analysis = [("AUMC", 454, 1785, 31, 104, 1140, 1149, 1131),
+                    ("AUMC", 208, 745, 26, 59, 1143, 1150, 1131),
+                    ("AUMC", 900, 3540, 55, 149, 1141, 1152, 1131)] 
     
-    base_path="/Users/choibyungjin/Library/CloudStorage/OneDrive-아주대학교/data/noncardiac/"
-    paces = ['noncardiac_pace', 'noncardiac_pace_demo','noncardiac_pace_cond','noncardiac_pace_elder']
-    for pace in paces :
-        args.inpath = str(
-            base_path + pace
-        )
-        os.chdir("/Users/choibyungjin/Library/CloudStorage/OneDrive-아주대학교/study/teaching/aggregator")
-        logger.add("./log.log")
-        ple_aggregation(
-            inpath=args.inpath,
-            title=args.title,
-            add_analysis=add_analysis,
-            dpi=args.dpi,
-            km_method='raw',
-        )
-        logger.info("DONE!!!!!")
+    args.inpath = "/Users/choibyungjin/Library/CloudStorage/OneDrive-아주대학교/data/noncardiac/noncardiac_pace_cond"
+    os.chdir("/Users/choibyungjin/Library/CloudStorage/OneDrive-아주대학교/study/teaching/aggregator")
+    logger.add("./log.log")
+    ple_aggregation(
+        inpath=args.inpath,
+        title=args.title,
+        add_analysis=add_analysis,
+        dpi=args.dpi,
+        km_method='adjusted',
+    )
+    logger.info("DONE!!!!!")
 

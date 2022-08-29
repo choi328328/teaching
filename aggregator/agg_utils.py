@@ -467,32 +467,7 @@ def ple_aggregation(
             f"target_id: {target_id}, comparator_id: {comparator_id}, outcome_id: {outcome_id}"
         )
         # if additional analysis(from other paper) is added, add it to results
-        if add_analysis:
-            for anal in add_analysis:
-                if int(anal[5]) * int(anal[6]) * int(anal[7]) == 0:
-                    add_t, add_c, add_o = target_id, comparator_id, outcome_id
-                else:
-                    add_t, add_c, add_o = int(anal[5]), int(anal[6]), int(anal[7])
-                results = results.append(
-                    pd.DataFrame(
-                        {
-                            "source": anal[0],
-                            "target_id": add_t,
-                            "comparator_id": add_c,
-                            "outcome_id": add_o,
-                            "analysis_id" :1,
-                            "rr": 1,
-                            "ci_95_lb": 0,
-                            "ci_95_ub": 1,
-                            "p": 1,
-                            "target_subjects": int(anal[1]),
-                            "comparator_subjects": int(anal[3]),
-                            "target_outcomes": int(anal[2]),
-                            "comparator_outcomes": int(anal[4]),
-                        },
-                        index=[0],
-                    )
-                )
+        
 
         results_filter = results.query(
             "target_id == @target_id and comparator_id == @comparator_id and outcome_id == @outcome_id and analysis_id == @analysis_id"
@@ -577,6 +552,27 @@ def ple_aggregation(
 
         # temporary sav start_pop for using R metafor packages
         strat_df=pd.concat(strat_dict.values())
+        
+        
+        if add_analysis:
+            for anal in add_analysis:
+                add_t, add_c, add_o = int(anal[5]), int(anal[6]), int(anal[7])
+                strat_df = strat_df.append(
+                    pd.DataFrame(
+                        {
+                            "source": anal[0],
+                            "target_id": add_t,
+                            "comparator_id": add_c,
+                            "outcome_id": add_o,
+                            "analysis_id" :1,
+                            "target_subjects": int(anal[1]),
+                            "comparator_subjects": int(anal[2]),
+                            "target_outcomes": int(anal[3]),
+                            "comparator_outcomes": int(anal[4]),
+                        },
+                        index=[0],
+                    )
+                )
         strat_df=strat_df.query(
             "target_id == @target_id and comparator_id == @comparator_id and outcome_id == @outcome_id and analysis_id == @analysis_id"
         ).copy()
@@ -589,6 +585,7 @@ def ple_aggregation(
             strat_df.loc[:, "comparator_subjects"]
             - strat_df.loc[:, "comparator_outcomes"]
         )
+        
         
         strat_df.sort_values('source').to_csv("./results/temp_results.csv")
         # use R metafor packages to get meta-analysis
