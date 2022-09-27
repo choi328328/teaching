@@ -22,7 +22,7 @@ from pathlib import Path
 from lifelines import CoxPHFitter
 
 
-def survival_aggregation(inpath):
+def survival_aggregation(inpath, negatives):
     sources = [
         i.split(".zip")[0] for i in os.listdir(inpath) if i.endswith(".zip")
     ]  # name of hospitals(data sources)
@@ -36,6 +36,9 @@ def survival_aggregation(inpath):
         my_zip.extractall(inpath)
         refer_paths = [
             i for i in my_zip.namelist() if i.endswith("outcomeModelReference.rds")
+        ]
+        summary_paths = [
+            i for i in my_zip.namelist() if i.endswith("analysisSummary.csv")
         ]
         for num, refer_path in enumerate(refer_paths):
 
@@ -53,6 +56,36 @@ def survival_aggregation(inpath):
             cohort_name_dict = dict(
                 zip(cohort_info["cohortDefinitionId"], cohort_info["cohortName"])
             )
+
+            anal_summary = pd.read_csv(str(inpath / summary_paths[num]))
+            anal_summary = anal_summary.dropna(subset=["rr"])
+            if negatives:
+                anal_summary = anal_summary[
+                    ~anal_summary["outcomeId"].isin(refer["outcomeId"])
+                ]
+                anal_summary["hr_ci"] = anal_summary.apply(
+                    lambda x: f'{x["rr"]:.3f} ({x["ci95lb"]:.3f}-{x["ci95ub"]:.3f}) ',
+                    axis=1,
+                )
+                anal_summary["treat_outcome"] = anal_summary.apply(
+                    lambda x: f'{x["target"]} ({x["eventsTarget"]}) ', axis=1
+                )
+                anal_summary["nontreat_outcome"] = anal_summary.apply(
+                    lambda x: f'{x["comparator"]} ({x["eventsComparator"]}) ', axis=1
+                )
+                anal_summary["source"] = [source] * len(anal_summary)
+                negatives_summ = anal_summary[
+                    [
+                        "source",
+                        "targetName",
+                        "comparatorName",
+                        "outcomeName",
+                        "hr_ci",
+                        "treat_outcome",
+                        "nontreat_outcome",
+                    ]
+                ]
+                df = pd.concat([df, negatives_summ], axis=0)
 
             for a, t, c, o, pop_name in refer_values:
                 pop_path = [i for i in my_zip.namelist() if i.endswith(pop_name)][0]
@@ -83,26 +116,32 @@ def survival_aggregation(inpath):
                     lb = cph.summary["exp(coef) lower 95%"].item()
                     ub = cph.summary["exp(coef) upper 95%"].item()
                     p_value = cph.summary["p"].item()
-                hr_ci = f"{hr:.3f} ({lb:.3f}-{ub:.3f}) ,p={p_value:.4f}"
+                hr_ci = f"{hr:.3f} ({lb:.3f}-{ub:.3f})"  #  ,p={p_value:.4f}
                 treat_outcome = f"{n_treat} ({treat_o})"
                 nontreat_outcome = f"{n_nontreat} ({nontreat_o})"
-
-                df = pd.concat(
+                tco_df = pd.DataFrame(
                     [
-                        df,
-                        pd.DataFrame(
-                            [
-                                source,
-                                t_name,
-                                c_name,
-                                o_name,
-                                hr_ci,
-                                treat_outcome,
-                                nontreat_outcome,
-                            ]
-                        ).T,
+                        source,
+                        t_name,
+                        c_name,
+                        o_name,
+                        hr_ci,
+                        treat_outcome,
+                        nontreat_outcome,
                     ]
-                )
+                ).T
+                tco_df.columns = [
+                    "source",
+                    "targetName",
+                    "comparatorName",
+                    "outcomeName",
+                    "hr_ci",
+                    "treat_outcome",
+                    "nontreat_outcome",
+                ]
+
+                df = pd.concat([df, tco_df])
+
     return df
 
 

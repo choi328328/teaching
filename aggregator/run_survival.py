@@ -21,6 +21,7 @@ if __name__ == "__main__":
     # logger.add("./log.log")
     survival_df = survival_aggregation(
         inpath=inpath,
+        negatives =True
     )
     survival_df.columns = [
         "source",
