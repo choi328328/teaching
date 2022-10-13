@@ -108,6 +108,11 @@ def get_data_from_sources(inpath, sources):
     ) = ({} for _ in range(7))
     source_errors = []
     # get data from zipfiles
+    sources = [
+        source
+        for source in sources
+        if os.path.exists(os.path.join(inpath, f"{source}.zip"))
+    ]
     for source in sources:
         try:
             (

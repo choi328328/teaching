@@ -101,6 +101,7 @@ def draw_cov_bal(
 
 
 def draw_raw_km_plot(km_pop_dict, sources):
+    sources = [source for source in sources if source in km_pop_dict]
     sources = [source for source in sources if len(km_pop_dict[source]) > 0]
     fig, axes = plt.subplots(
         len(sources) // 3 + 1,

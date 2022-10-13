@@ -58,16 +58,11 @@ def survival_aggregation(inpath, negatives):
             )
 
             anal_summary = pd.read_csv(str(inpath / summary_paths[num]))
-            anal_summary = anal_summary.dropna(subset=["rr", "ci95lb"])
-            anal_summary = anal_summary[
-                (anal_summary["ci95lb"] > 1) | (anal_summary["ci95ub"] < 1)
-            ]
+            anal_summary = anal_summary.dropna(subset=["rr"])
             if negatives:
                 anal_summary = anal_summary[
                     ~anal_summary["outcomeId"].isin(refer["outcomeId"])
                 ]
-                if len(anal_summary) == 0:
-                    continue
                 anal_summary["hr_ci"] = anal_summary.apply(
                     lambda x: f'{x["rr"]:.3f} ({x["ci95lb"]:.3f}-{x["ci95ub"]:.3f}) ',
                     axis=1,

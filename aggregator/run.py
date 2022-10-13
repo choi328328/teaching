@@ -56,18 +56,26 @@ if __name__ == "__main__":
         ("AUMC", 900, 3540, 55, 149, 1141, 1152, 1131),
     ]
     add_analysis = []
-
-    args.inpath = "/Users/choibyungjin/Downloads/CT_cont_sub/sub_demo"
-    os.chdir(
-        "/Users/choibyungjin/Library/CloudStorage/OneDrive-아주대학교/study/teaching/aggregator"
-    )
-    # logger.add("./log.log")
-    ple_aggregation(
-        inpath=args.inpath,
-        report_path='./reports',
-        title=args.title,
-        add_analysis=add_analysis,
-        dpi=args.dpi,
-        km_method="raw",
-    )
-    logger.info("DONE!!!!!")
+    args.inpath = "/Users/choibyungjin/Library/CloudStorage/OneDrive-아주대학교/data/aggregation/gas_pace/"
+    groups = [
+        "main",
+        "demo",
+        # "dm",
+        # "htn",
+        # "ckd",
+    ]
+    for g in groups:
+        path = args.inpath + g
+        os.chdir(
+            "/Users/choibyungjin/Library/CloudStorage/OneDrive-아주대학교/study/teaching/aggregator"
+        )
+        # logger.add("./log.log")
+        ple_aggregation(
+            inpath=path,
+            report_path="./reports",
+            title=args.title,
+            add_analysis=add_analysis,
+            dpi=args.dpi,
+            km_method="raw",
+        )
+        logger.info("DONE!!!!!")
