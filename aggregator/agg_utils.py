@@ -52,14 +52,14 @@ def get_stratpop(inpath, source):
     return pd.DataFrame(
         {
             "source": src,
-            "target_id": t,
-            "comparator_id": c,
-            "outcome_id": o,
-            "analysis_id": a,
-            "target_subjects": t_counts,
-            "comparator_subjects": c_counts,
-            "target_outcomes": t_o_counts,
-            "comparator_outcomes": c_o_counts,
+            "t_id": t,
+            "c_id": c,
+            "o_id": o,
+            "a_id": a,
+            "t_pats": t_counts,
+            "c_pats": c_counts,
+            "t_o": t_o_counts,
+            "c_o": c_o_counts,
         }
     )
 
@@ -87,7 +87,7 @@ def get_data(inpath, source):
     cohort_results["source"] = source
     attrition["source"] = source
     attrition["cohort"] = attrition.apply(
-        lambda x: "target" if x["exposure_id"] == x["target_id"] else "comparator",
+        lambda x: "target" if x["exposure_id"] == x["t_id"] else "comparator",
         axis=1,
     )
 
@@ -153,7 +153,7 @@ def get_data_from_sources(inpath, sources):
     )
 
 
-def draw_ps(ps_dict, sources, target_id, comparator_id, outcome_id, analysis_id):
+def draw_ps(ps_dict, sources, t_id, c_id, o_id, a_id):
     sources = [source for source in sources if len(ps_dict[source]) > 0]
     fig, axes = plt.subplots(
         len(sources) // 3 + 1,
@@ -162,13 +162,7 @@ def draw_ps(ps_dict, sources, target_id, comparator_id, outcome_id, analysis_id)
         facecolor="white",
     )
     for num, source in enumerate(sources):
-        ps_score = (
-            ps_dict[source]
-            .query(
-                "target_id == @target_id and comparator_id == @comparator_id  and analysis_id == @analysis_id"
-            )
-            .copy()
-        )
+        ps_score = ps_dict[source].query(aggConstants.tca_query).copy()
         coord = (num // 3, num % 3) if len(sources) // 3 >= 1 else num % 3
         axes[coord].plot(
             ps_score["preference_score"],
@@ -206,9 +200,7 @@ def draw_ps(ps_dict, sources, target_id, comparator_id, outcome_id, analysis_id)
     return fig
 
 
-def draw_cov_bal(
-    covariate_dict, sources, target_id, comparator_id, outcome_id, analysis_id
-):
+def draw_cov_bal(covariate_dict, sources, t_id, c_id, o_id, a_id):
     sources = [source for source in sources if len(covariate_dict[source]) > 0]
     fig, axes = plt.subplots(
         len(sources) // 3 + 1,
@@ -219,13 +211,7 @@ def draw_cov_bal(
 
     for num, source in enumerate(sources):
         coord = (num // 3, num % 3) if len(sources) // 3 >= 1 else num % 3
-        cov_bal = (
-            covariate_dict[source]
-            .query(
-                "target_id == @target_id and comparator_id == @comparator_id and outcome_id == @outcome_id  and analysis_id == @analysis_id"
-            )
-            .copy()
-        )
+        cov_bal = covariate_dict[source].query(aggConstants.tcoa_query).copy()
         cov_bal.loc[:, "std_diff_after_abs"] = cov_bal.loc[:, "std_diff_after"].map(
             lambda x: abs(x)
         )
@@ -287,7 +273,7 @@ def draw_raw_km_plot(km_pop_dict, sources):
     return fig
 
 
-def draw_km_plot(km_dict, sources, target_id, comparator_id, outcome_id, analysis_id):
+def draw_km_plot(km_dict, sources, t_id, c_id, o_id, a_id):
     sources = [source for source in sources if len(km_dict[source]) > 0]
     fig, axes = plt.subplots(
         len(sources) // 3 + 1,
@@ -298,13 +284,7 @@ def draw_km_plot(km_dict, sources, target_id, comparator_id, outcome_id, analysi
 
     for num, source in enumerate(sources):
         coord = (num // 3, num % 3) if len(sources) // 3 >= 1 else num % 3
-        km_dist = (
-            km_dict[source]
-            .query(
-                "target_id == @target_id and comparator_id == @comparator_id and outcome_id == @outcome_id  and analysis_id == @analysis_id"
-            )
-            .copy()
-        )
+        km_dist = km_dict[source].query(aggConstants.tcoa_query).copy()
         km_dist = km_dist.query("(target_survival>0) & (comparator_survival>0)")
         axes[coord].step(
             km_dist["time"],
@@ -390,13 +370,8 @@ def make_html(
             open("./results/km_raw_plot.png", "rb").read()
         ).decode("utf-8")
 
-    results["target(outcome)"] = results.apply(
-        lambda x: f'{x["target_subjects"]} ({x["target_outcomes"]})', axis=1
-    )
-    results["comparator(outcome)"] = results.apply(
-        lambda x: f'{x["comparator_subjects"]} ({x["comparator_outcomes"]})',
-        axis=1,
-    )
+    results["t(o)"] = results.apply(lambda x: f'{x["t_pats"]} ({x["t_o"]})', axis=1)
+    results["c(o)"] = results.apply(lambda x: f'{x["c_pats"]} ({x["c_o"]})', axis=1)
     results2 = results[aggConstants.report_cols]
 
     # 2. Combine them together using a long f-string
@@ -410,7 +385,7 @@ def make_html(
                 <p>{text}</p>
 
                 <h3>{results_text}</h3>
-                {build_table(results2.query('outcome_id != -999'), 'blue_light')}
+                {build_table(results2.query('o_id != -999'), 'blue_light')}
                 <h3>Forest plot</h3>
                 <img src="data:image/png;base64,{forest_plot_uri}" width="900"> 
                 
@@ -464,9 +439,9 @@ def ple_aggregation(
     add_analysis=False,
     dpi=100,
     km_method="adjusted",
-    target_id=0,
-    comparator_id=0,
-    outcome_id=0,
+    t_id=0,
+    c_id=0,
+    o_id=0,
 ):
     required_cols = aggConstants.required_cols
     sources = [
@@ -486,37 +461,27 @@ def ple_aggregation(
 
     cohort_name_dict = get_cohort_name(inpath, sources[0])
 
-    negative_ids = list(negative_dict.values())[0].outcome_id
+    negative_ids = list(negative_dict.values())[0].o_id
     # concated results
     results_cated = pd.concat(results_dict.values())
-    results = results_cated[~results_cated["outcome_id"].isin(negative_ids)][
-        required_cols
-    ]
+    results = results_cated[~results_cated["o_id"].isin(negative_ids)][required_cols]
 
     # get study population
-    tcoa_id = (
-        results[["target_id", "comparator_id", "outcome_id", "analysis_id"]]
-        .drop_duplicates()
-        .values
-    )
+    tcoa_id = results[["t_id", "c_id", "o_id", "a_id"]].drop_duplicates().values
     check_cols = [
-        "target_subjects",
-        "comparator_subjects",
-        "target_outcomes",
-        "comparator_outcomes",
-        "target_no_outcomes",
-        "comparator_no_outcomes",
+        "t_pats",
+        "c_pats",
+        "t_o",
+        "c_o",
+        "t_wo_o",
+        "c_wo_o",
     ]
     # if target, comparator, outcome are not specified, use the first one
-    for target_id, comparator_id, outcome_id, analysis_id in tcoa_id:
-        logger.info(
-            f"target_id: {target_id}, comparator_id: {comparator_id}, outcome_id: {outcome_id}"
-        )
+    for t_id, c_id, o_id, a_id in tcoa_id:
+        logger.info(f"t_id: {t_id}, c_id: {c_id}, o_id: {o_id}")
         # if additional analysis(from other paper) is added, add it to results
 
-        results_filter = results.query(
-            "target_id == @target_id and comparator_id == @comparator_id and outcome_id == @outcome_id and analysis_id == @analysis_id"
-        ).copy()
+        results_filter = results.query(aggConstants.tcoa_query).copy()
 
         if km_method == "raw":
             km_pop_dict = {}
@@ -525,9 +490,7 @@ def ple_aggregation(
                 km_pop_path = [
                     i
                     for i in my_zip.namelist()
-                    if ("StratPop" in i)
-                    & (f"t{target_id}_c{comparator_id}" in i)
-                    & (f"o{outcome_id}" in i)
+                    if ("StratPop" in i) & (f"t{t_id}_c{c_id}" in i) & (f"o{o_id}" in i)
                 ][0]
                 # ZipFile .extract (member, path=None, pwd=None)
                 my_zip.extract(km_pop_path, "./results")
@@ -537,10 +500,8 @@ def ple_aggregation(
                 km_pop_dict[source] = km_pop
 
         # get non significants rate of negative outcomes
-        results_cated = results_cated.query(
-            " target_id == @target_id & comparator_id == @comparator_id and analysis_id == @analysis_id "
-        )
-        negative_cated = results_cated[results_cated["outcome_id"].isin(negative_ids)]
+        results_cated = results_cated.query(aggConstants.tca_query)
+        negative_cated = results_cated[results_cated["o_id"].isin(negative_ids)]
         negatives_nonsig = pd.DataFrame(
             negative_cated[required_cols]
             .dropna(subset=["rr"])
@@ -556,9 +517,7 @@ def ple_aggregation(
         # get attrition dataframe
 
         attrition_cated = pd.concat(attrition_dict.values())
-        attrition_cated = attrition_cated.query(
-            "target_id == @target_id & comparator_id == @comparator_id & outcome_id == @outcome_id and analysis_id == @analysis_id"
-        )
+        attrition_cated = attrition_cated.query(aggConstants.tcoa_query)
         attritions = attrition_cated.pivot(
             index=["source", "cohort"], columns="description", values="subjects"
         )
@@ -568,12 +527,10 @@ def ple_aggregation(
         # if row in results have abnormal values...warn about source
 
         results_filter.loc[:, "target_no_outcomes"] = (
-            results_filter.loc[:, "target_subjects"]
-            - results_filter.loc[:, "target_outcomes"]
+            results_filter.loc[:, "t_pats"] - results_filter.loc[:, "t_o"]
         )
-        results_filter.loc[:, "comparator_no_outcomes"] = (
-            results_filter.loc[:, "comparator_subjects"]
-            - results_filter.loc[:, "comparator_outcomes"]
+        results_filter.loc[:, "c_wo_o"] = (
+            results_filter.loc[:, "c_pats"] - results_filter.loc[:, "c_o"]
         )
         error_source = []
         for (num, row), col in itertools.product(results_filter.iterrows(), check_cols):
@@ -598,29 +555,26 @@ def ple_aggregation(
                     pd.DataFrame(
                         {
                             "source": anal[0],
-                            "target_id": add_t,
-                            "comparator_id": add_c,
-                            "outcome_id": add_o,
-                            "analysis_id": 1,
-                            "target_subjects": int(anal[1]),
-                            "comparator_subjects": int(anal[2]),
-                            "target_outcomes": int(anal[3]),
-                            "comparator_outcomes": int(anal[4]),
+                            "t_id": add_t,
+                            "c_id": add_c,
+                            "o_id": add_o,
+                            "a_id": 1,
+                            "t_pats": int(anal[1]),
+                            "c_pats": int(anal[2]),
+                            "t_o": int(anal[3]),
+                            "c_o": int(anal[4]),
                         },
                         index=[0],
                     )
                 )
         strat_df = strat_df.query(
-            "target_id == @target_id and comparator_id == @comparator_id and outcome_id == @outcome_id and analysis_id == @analysis_id"
+            "t_id == @t_id and c_id == @c_id and o_id == @o_id and a_id == @a_id"
         ).copy()
 
         strat_df.loc[:, "target_no_outcomes"] = (
-            strat_df.loc[:, "target_subjects"] - strat_df.loc[:, "target_outcomes"]
+            strat_df.loc[:, "t_pats"] - strat_df.loc[:, "t_o"]
         )
-        strat_df.loc[:, "comparator_no_outcomes"] = (
-            strat_df.loc[:, "comparator_subjects"]
-            - strat_df.loc[:, "comparator_outcomes"]
-        )
+        strat_df.loc[:, "c_wo_o"] = strat_df.loc[:, "c_pats"] - strat_df.loc[:, "c_o"]
 
         strat_df.sort_values("source").to_csv("./results/temp_results.csv")
         # use R metafor packages to get meta-analysis
@@ -629,21 +583,15 @@ def ple_aggregation(
         # (aggConstants.metafor_script)
 
         # Illustrate PS distribution
-        ps_fig = draw_ps(
-            ps_dict, sources, target_id, comparator_id, outcome_id, analysis_id
-        )
+        ps_fig = draw_ps(ps_dict, sources, t_id, c_id, o_id, a_id)
         ps_fig.savefig("./results/ps_density.png", dpi=dpi)
 
         # Illustrate covariate balance
-        cov_bal_fig = draw_cov_bal(
-            covariate_dict, sources, target_id, comparator_id, outcome_id, analysis_id
-        )
+        cov_bal_fig = draw_cov_bal(covariate_dict, sources, t_id, c_id, o_id, a_id)
         cov_bal_fig.savefig("./results/cov_bal.png", dpi=dpi)
 
         # Illustrate KM distribution
-        km_fig = draw_km_plot(
-            km_dict, sources, target_id, comparator_id, outcome_id, analysis_id
-        )
+        km_fig = draw_km_plot(km_dict, sources, t_id, c_id, o_id, a_id)
         km_fig.savefig("./results/km_plot.png", dpi=dpi)
 
         if km_method == "raw":
@@ -657,14 +605,12 @@ def ple_aggregation(
         # make_html
 
         text = f"""
-                target: {cohort_name_dict[target_id]}, \n
-                Comparator : {cohort_name_dict[comparator_id]}, \n
-                Outcome : {cohort_name_dict[outcome_id]}, \n
-                Analysis : {cohort_name_dict['analysis'][analysis_id]}, \n
+                target: {cohort_name_dict[t_id]}, \n
+                Comparator : {cohort_name_dict[c_id]}, \n
+                Outcome : {cohort_name_dict[o_id]}, \n
+                Analysis : {cohort_name_dict['analysis'][a_id]}, \n
                 """
-        outpath = (
-            f"report_t{target_id}_c{comparator_id}_o{outcome_id}_a{analysis_id}.html"
-        )
+        outpath = f"report_t{t_id}_c{c_id}_o{o_id}_a{a_id}.html"
         logger.info(f"{text}to {outpath}")
         os.makedirs(inpath.split("/")[-1], exist_ok=True)
         outpath = inpath.split("/")[-1] + "/" + outpath

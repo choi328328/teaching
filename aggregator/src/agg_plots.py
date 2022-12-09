@@ -2,9 +2,10 @@ import matplotlib.pyplot as plt
 from pdf2image import convert_from_path
 from PIL import Image
 from lifelines import KaplanMeierFitter
+from .agg_constants import aggConstants
 
 
-def draw_ps(ps_dict, sources, target_id, comparator_id, outcome_id, analysis_id):
+def draw_ps(ps_dict, sources, t_id, c_id, o_id, a_id):
     sources = [source for source in sources if len(ps_dict[source]) > 0]
     fig, axes = plt.subplots(
         len(sources) // 3 + 1,
@@ -13,13 +14,7 @@ def draw_ps(ps_dict, sources, target_id, comparator_id, outcome_id, analysis_id)
         facecolor="white",
     )
     for num, source in enumerate(sources):
-        ps_score = (
-            ps_dict[source]
-            .query(
-                "target_id == @target_id and comparator_id == @comparator_id  and analysis_id == @analysis_id"
-            )
-            .copy()
-        )
+        ps_score = ps_dict[source].query(aggConstants.tca_query).copy()
         coord = (num // 3, num % 3) if len(sources) // 3 >= 1 else num % 3
         axes[coord].plot(
             ps_score["preference_score"],
@@ -57,9 +52,7 @@ def draw_ps(ps_dict, sources, target_id, comparator_id, outcome_id, analysis_id)
     return fig
 
 
-def draw_cov_bal(
-    covariate_dict, sources, target_id, comparator_id, outcome_id, analysis_id
-):
+def draw_cov_bal(covariate_dict, sources, t_id, c_id, o_id, a_id):
     sources = [source for source in sources if len(covariate_dict[source]) > 0]
     fig, axes = plt.subplots(
         len(sources) // 3 + 1,
@@ -70,13 +63,7 @@ def draw_cov_bal(
 
     for num, source in enumerate(sources):
         coord = (num // 3, num % 3) if len(sources) // 3 >= 1 else num % 3
-        cov_bal = (
-            covariate_dict[source]
-            .query(
-                "target_id == @target_id and comparator_id == @comparator_id and outcome_id == @outcome_id  and analysis_id == @analysis_id"
-            )
-            .copy()
-        )
+        cov_bal = covariate_dict[source].query(aggConstants.tcoa_query).copy()
         cov_bal.loc[:, "std_diff_after_abs"] = cov_bal.loc[:, "std_diff_after"].map(
             lambda x: abs(x)
         )
@@ -139,7 +126,7 @@ def draw_raw_km_plot(km_pop_dict, sources):
     return fig
 
 
-def draw_km_plot(km_dict, sources, target_id, comparator_id, outcome_id, analysis_id):
+def draw_km_plot(km_dict, sources, t_id, c_id, o_id, a_id):
     sources = [source for source in sources if len(km_dict[source]) > 0]
     fig, axes = plt.subplots(
         len(sources) // 3 + 1,
@@ -150,13 +137,7 @@ def draw_km_plot(km_dict, sources, target_id, comparator_id, outcome_id, analysi
 
     for num, source in enumerate(sources):
         coord = (num // 3, num % 3) if len(sources) // 3 >= 1 else num % 3
-        km_dist = (
-            km_dict[source]
-            .query(
-                "target_id == @target_id and comparator_id == @comparator_id and outcome_id == @outcome_id  and analysis_id == @analysis_id"
-            )
-            .copy()
-        )
+        km_dist = km_dict[source].query(aggConstants.tcoa_query).copy()
         km_dist = km_dist.query("(target_survival>0) & (comparator_survival>0)")
         axes[coord].step(
             km_dist["time"],
@@ -194,18 +175,27 @@ def draw_km_plot(km_dict, sources, target_id, comparator_id, outcome_id, analysi
 
 def draw_forest_plot():
     fig, axes = plt.subplots(1, 2, figsize=(30, 15), facecolor="white")
-    convert_from_path("./results/forest_fixed.pdf")[0].save(
-        "./results/forest_fixed.png", "PNG"
-    )
-    convert_from_path("./results/forest_random.pdf")[0].save(
-        "./results/forest_random.png", "PNG"
-    )
-    img1 = Image.open("./results/forest_fixed.png")
-    axes[0].imshow(img1)
-    axes[0].axis("off")
 
-    img2 = Image.open("./results/forest_random.png")
-    axes[1].imshow(img2)
-    axes[1].axis("off")
+    for num, forest in enumerate(["forest_fixed", "forest_random"]):
+        convert_from_path(f"./results/{forest}.pdf")[0].save(
+            f"./results/{forest}.png", "PNG"
+        )
+        img = Image.open(f"./results/{forest}.png")
+        axes[num].imshow(img)
+        axes[num].axis("off")
+    # convert_from_path("./results/forest_fixed.pdf")[0].save(
+    #     "./results/forest_fixed.png", "PNG"
+    # )
+    # img1 = Image.open("./results/forest_fixed.png")
+    # axes[0].imshow(img1)
+    # axes[0].axis("off")
+
+    # convert_from_path("./results/forest_random.pdf")[0].save(
+    #     "./results/forest_random.png", "PNG"
+    # )
+    # img2 = Image.open("./results/forest_random.png")
+    # axes[1].imshow(img2)
+    # axes[1].axis("off")
+
     fig.tight_layout()
     return fig

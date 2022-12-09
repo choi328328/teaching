@@ -50,32 +50,30 @@ if __name__ == "__main__":
     # 외부 혹은 다른 논문에서 분석된 자료를 함께 meta-analysis하기 위해서...add_analysis 사용
     # target subject, comparator_subject, target_outcome, comparator_outcome, t,c, o_id
     # add_analysis = [("Samsung", 7839, 1746, 7839, 1558, 0, 0, 0)]
-    add_analysis = [
-        ("AUMC", 454, 1785, 31, 104, 1140, 1149, 1131),
-        ("AUMC", 208, 745, 26, 59, 1143, 1150, 1131),
-        ("AUMC", 900, 3540, 55, 149, 1141, 1152, 1131),
-    ]
+
     add_analysis = []
-    args.inpath = "/Users/choibyungjin/Library/CloudStorage/OneDrive-아주대학교/data/aggregation/gas_pace/"
+    base_path = Path(
+        "/Users/choibyungjin/Library/CloudStorage/OneDrive-아주대학교/data/aggregation"
+    )
+    code_path = Path(
+        "/Users/choibyungjin/Library/CloudStorage/OneDrive-아주대학교/study/teaching/aggregator"
+    )
+    args.inpath = base_path / "gas_pace"
     groups = [
         "main",
-        "demo",
-        # "dm",
-        # "htn",
-        # "ckd",
+        "dm",
+        "htn",
+        "ckd",
     ]
-    for g in groups:
-        path = args.inpath + g
-        os.chdir(
-            "/Users/choibyungjin/Library/CloudStorage/OneDrive-아주대학교/study/teaching/aggregator"
-        )
-        # logger.add("./log.log")
-        ple_aggregation(
-            inpath=path,
-            report_path="./reports",
-            title=args.title,
-            add_analysis=add_analysis,
-            dpi=args.dpi,
-            km_method="raw",
-        )
-        logger.info("DONE!!!!!")
+    path = base_path / "HNNC_new/1_main_analysis"
+    os.chdir(code_path)
+    # logger.add("./log.log")
+    ple_aggregation(
+        inpath=path,
+        report_path="./reports",
+        title=args.title,
+        add_analysis=add_analysis,
+        dpi=args.dpi,
+        km_method="raw",
+    )
+    logger.info("DONE!!!!!")
