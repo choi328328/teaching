@@ -197,7 +197,14 @@ def ple_aggregation(
             "p",
             "source",
         ]
-    ].drop_duplicates()
+    ].drop_duplicates(
+        subset=[
+            "t_id",
+            "c_id",
+            "o_id",
+            "a_id",
+        ]
+    )
     # if target, comparator, outcome are not specified, use the first one
     for num, row in results.iterrows():
         t_id, c_id, o_id, a_id, _, _, _, _, _, _, _, _, _ = row

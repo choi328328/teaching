@@ -45,7 +45,6 @@ args = parser.parse_args()
 # )
 os.makedirs("./results", exist_ok=True)
 
-
 if __name__ == "__main__":
     # 외부 혹은 다른 논문에서 분석된 자료를 함께 meta-analysis하기 위해서...add_analysis 사용
     # target subject, comparator_subject, target_outcome, comparator_outcome, t,c, o_id
@@ -65,9 +64,10 @@ if __name__ == "__main__":
         "htn",
         "ckd",
     ]
-    path = base_path / "HNNC_new/1_main_analysis"
+    path = base_path / "noncardiac_pace/3year"
     os.chdir(code_path)
     # logger.add("./log.log")
+    
     ple_aggregation(
         inpath=path,
         report_path="./reports",
