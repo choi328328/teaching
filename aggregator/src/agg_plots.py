@@ -7,6 +7,8 @@ from .agg_constants import aggConstants
 
 def draw_ps(ps_dict, sources, t_id, c_id, o_id, a_id):
     sources = [source for source in sources if len(ps_dict[source]) > 0]
+    if not sources:
+        return plt.subplots(1, 1, figsize=(16, 1.5))[0]
     fig, axes = plt.subplots(
         len(sources) // 3 + 1,
         3,
@@ -48,12 +50,15 @@ def draw_ps(ps_dict, sources, t_id, c_id, o_id, a_id):
         axes[coord].set_ylabel("Density")
         axes[coord].legend(loc="upper center", frameon=False)
         axes[coord].set_title(source, size=20)
-    fig.tight_layout()
+    if len(sources) != 1:
+        fig.tight_layout()
     return fig
 
 
 def draw_cov_bal(covariate_dict, sources, t_id, c_id, o_id, a_id):
     sources = [source for source in sources if len(covariate_dict[source]) > 0]
+    if not sources:
+        return plt.subplots(1, 1, figsize=(16, 1.5))[0]
     fig, axes = plt.subplots(
         len(sources) // 3 + 1,
         3,
@@ -83,13 +88,16 @@ def draw_cov_bal(covariate_dict, sources, t_id, c_id, o_id, a_id):
         axes[coord].set_ylim(0, 0.5)
         axes[coord].plot([0, 1], linestyle="--", color=(0.3, 0.3, 0.3))
         axes[coord].set_title(source, size=20)
-    fig.tight_layout()
+    if len(sources) != 1:
+        fig.tight_layout()
     return fig
 
 
 def draw_raw_km_plot(km_pop_dict, sources):
     sources = [source for source in sources if source in km_pop_dict]
     sources = [source for source in sources if len(km_pop_dict[source]) > 0]
+    if not sources:
+        return plt.subplots(1, 1, figsize=(16, 1.5))[0]
     fig, axes = plt.subplots(
         len(sources) // 3 + 1,
         3,
@@ -122,12 +130,15 @@ def draw_raw_km_plot(km_pop_dict, sources):
         axes[coord].set_xlabel("Time in days")
         axes[coord].set_ylabel("Survival probability")
         # axes[coord].set_title(source, size=20)
-    fig.tight_layout()
+    if len(sources) != 1:
+        fig.tight_layout()
     return fig
 
 
 def draw_km_plot(km_dict, sources, t_id, c_id, o_id, a_id):
     sources = [source for source in sources if len(km_dict[source]) > 0]
+    if not sources:
+        return plt.subplots(1, 1, figsize=(16, 1.5))[0]
     fig, axes = plt.subplots(
         len(sources) // 3 + 1,
         3,
@@ -169,7 +180,8 @@ def draw_km_plot(km_dict, sources, t_id, c_id, o_id, a_id):
         axes[coord].set_ylabel("Survival probability")
         axes[coord].legend(frameon=False)
         axes[coord].set_title(source, size=20)
-    fig.tight_layout()
+    if len(sources) != 1:
+        fig.tight_layout()
     return fig
 
 

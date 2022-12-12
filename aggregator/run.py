@@ -57,17 +57,10 @@ if __name__ == "__main__":
     code_path = Path(
         "/Users/choibyungjin/Library/CloudStorage/OneDrive-아주대학교/study/teaching/aggregator"
     )
-    args.inpath = base_path / "gas_pace"
-    groups = [
-        "main",
-        "dm",
-        "htn",
-        "ckd",
-    ]
     path = base_path / "noncardiac_pace/3year"
     os.chdir(code_path)
     # logger.add("./log.log")
-    
+
     ple_aggregation(
         inpath=path,
         report_path="./reports",

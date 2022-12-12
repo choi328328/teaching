@@ -23,136 +23,6 @@ import pyreadr
 from pathlib import Path
 
 
-# def survival_aggregation(inpath, negatives):  # get survival_aggregation from stratpop
-#     sources = [
-#         i.split(".zip")[0] for i in os.listdir(inpath) if i.endswith(".zip")
-#     ]  # name of hospitals(data sources)
-#     km_pop_dict = {source: get_stratpop_info(inpath, source) for source in sources}
-#     inpath = Path(inpath)
-#     cohort_name_dict = get_cohort_name(inpath, sources[0])
-
-#     df = pd.DataFrame()
-#     for source in sources:
-#         my_zip = zipfile.ZipFile(inpath / f"{source}.zip")
-#         my_zip.extractall(inpath)
-#         refer_paths = [
-#             i for i in my_zip.namelist() if i.endswith("outcomeModelReference.rds")
-#         ]
-#         summary_paths = [
-#             i for i in my_zip.namelist() if i.endswith("analysisSummary.csv")
-#         ]
-#         for num, refer_path in enumerate(refer_paths):
-
-#             refer = pyreadr.read_r(str(inpath / refer_path))[None].query(
-#                 'strataFile != "" '
-#             )
-#             refer_values = refer[
-#                 ["analysisId", "targetId", "comparatorId", "outcomeId", "strataFile"]
-#             ].values
-
-#             counts_path = [
-#                 i for i in my_zip.namelist() if i.endswith("CohortCounts.csv")
-#             ][num]
-#             cohort_info = pd.read_csv(str(inpath / counts_path))
-#             cohort_name_dict = dict(
-#                 zip(cohort_info["cohortDefinitionId"], cohort_info["cohortName"])
-#             )
-
-#             anal_summary = pd.read_csv(str(inpath / summary_paths[num]))
-#             anal_summary = anal_summary.dropna(subset=["rr", "ci95lb"])
-#             anal_summary = anal_summary[
-#                 (anal_summary["ci95lb"] > 1) | (anal_summary["ci95ub"] < 1)
-#             ]
-#             if negatives:
-#                 anal_summary = anal_summary[
-#                     ~anal_summary["outcomeId"].isin(refer["outcomeId"])
-#                 ]
-#                 if len(anal_summary) == 0:
-#                     continue
-#                 anal_summary["hr_ci"] = anal_summary.apply(
-#                     lambda x: f'{x["rr"]:.3f} ({x["ci95lb"]:.3f}-{x["ci95ub"]:.3f}) ',
-#                     axis=1,
-#                 )
-#                 anal_summary["treat_outcome"] = anal_summary.apply(
-#                     lambda x: f'{x["target"]} ({x["eventsTarget"]}) ', axis=1
-#                 )
-#                 anal_summary["nontreat_outcome"] = anal_summary.apply(
-#                     lambda x: f'{x["comparator"]} ({x["eventsComparator"]}) ', axis=1
-#                 )
-#                 anal_summary["source"] = [source] * len(anal_summary)
-#                 negatives_summ = anal_summary[
-#                     [
-#                         "source",
-#                         "targetName",
-#                         "comparatorName",
-#                         "outcomeName",
-#                         "hr_ci",
-#                         "treat_outcome",
-#                         "nontreat_outcome",
-#                     ]
-#                 ]
-#                 df = pd.concat([df, negatives_summ], axis=0)
-
-#             for a, t, c, o, pop_name in refer_values:
-#                 pop_path = [i for i in my_zip.namelist() if i.endswith(pop_name)][0]
-#                 km_pop = pyreadr.read_r(inpath / pop_path)[None][
-#                     ["treatment", "survivalTime", "outcomeCount"]
-#                 ]
-#                 km_pop_dict[source] = km_pop
-
-#                 # T,C,O cohort name 얻기
-#                 t_name = cohort_name_dict.get(t)
-#                 c_name = cohort_name_dict.get(c)
-#                 o_name = cohort_name_dict.get(o)
-#                 n_treat, n_nontreat = (
-#                     len(km_pop.query("treatment==1")),
-#                     len(km_pop.query("treatment==0")),
-#                 )
-#                 treat_o, nontreat_o = (
-#                     int(km_pop.query("treatment==1").outcomeCount.sum()),
-#                     int(km_pop.query("treatment==0").outcomeCount.sum()),
-#                 )
-#                 # cph fit 결과 및 N수를 dataframe으로 정리하기
-#                 # csv로 결과 출력
-#                 # source, t_name, c_name, o_name, N, p_value, HR, CI_lower, CI_upper
-#                 if (treat_o == 0) | (treat_o == n_treat):
-#                     hr, p_value, lb, ub = 0, 0, 0, 0
-#                 else:
-#                     cph = CoxPHFitter()
-#                     cph.fit(km_pop, "survivalTime", "outcomeCount")
-#                     hr = cph.summary["exp(coef)"].item()
-#                     lb = cph.summary["exp(coef) lower 95%"].item()
-#                     ub = cph.summary["exp(coef) upper 95%"].item()
-#                     p_value = cph.summary["p"].item()
-#                 hr_ci = f"{hr:.3f} ({lb:.3f}-{ub:.3f})"  #  ,p={p_value:.4f}
-#                 treat_outcome = f"{n_treat} ({treat_o})"
-#                 nontreat_outcome = f"{n_nontreat} ({nontreat_o})"
-#                 tco_df = pd.DataFrame(
-#                     [
-#                         source,
-#                         t_name,
-#                         c_name,
-#                         o_name,
-#                         hr_ci,
-#                         treat_outcome,
-#                         nontreat_outcome,
-#                     ]
-#                 ).T
-#                 tco_df.columns = [
-#                     "source",
-#                     "targetName",
-#                     "comparatorName",
-#                     "outcomeName",
-#                     "hr_ci",
-#                     "treat_outcome",
-#                     "nontreat_outcome",
-#                 ]
-
-#                 df = pd.concat([df, tco_df])
-
-#     return df
-
-
 def ple_aggregation(
     inpath,
     report_path="./reports",
@@ -259,15 +129,16 @@ def ple_aggregation(
 
         # make plots for html
         os.makedirs("./results", exist_ok=True)
-        ps_fig = draw_ps(ps_dict, sources, t_id, c_id, o_id, a_id)
-        ps_fig.savefig("./results/ps_density.png", dpi=dpi)
-        cov_bal_fig = draw_cov_bal(covariate_dict, sources, t_id, c_id, o_id, a_id)
-        cov_bal_fig.savefig("./results/cov_bal.png", dpi=dpi)
-        km_fig = draw_km_plot(km_dict, sources, t_id, c_id, o_id, a_id)
-        km_fig.savefig("./results/km_plot.png", dpi=dpi)
-        if km_method == "raw":
-            km_raw_fig = draw_raw_km_plot(km_pop_dict, sources)
-            km_raw_fig.savefig("./results/km_raw_plot.png", dpi=dpi)
+        if len(sources) != 0:
+            ps_fig = draw_ps(ps_dict, sources, t_id, c_id, o_id, a_id)
+            ps_fig.savefig("./results/ps_density.png", dpi=dpi)
+            cov_bal_fig = draw_cov_bal(covariate_dict, sources, t_id, c_id, o_id, a_id)
+            cov_bal_fig.savefig("./results/cov_bal.png", dpi=dpi)
+            km_fig = draw_km_plot(km_dict, sources, t_id, c_id, o_id, a_id)
+            km_fig.savefig("./results/km_plot.png", dpi=dpi)
+            if km_method == "raw":
+                km_raw_fig = draw_raw_km_plot(km_pop_dict, sources)
+                km_raw_fig.savefig("./results/km_raw_plot.png", dpi=dpi)
         os.system("Rscript metafor_script.R")
         forest_fig = draw_forest_plot()  # R metafor packages to get meta-analysis
         forest_fig.savefig("./results/forest_plot.png", dpi=dpi)
