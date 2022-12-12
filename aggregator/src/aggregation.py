@@ -51,33 +51,10 @@ def ple_aggregation(
     cohort_name_dict = get_cohort_name(inpath, sources[0])
 
     # get study population
-    results = results[
-        [
-            "t_id",
-            "c_id",
-            "o_id",
-            "a_id",
-            "t_pats",
-            "c_pats",
-            "t_o",
-            "c_o",
-            "rr",
-            "ci_95_ub",
-            "ci_95_lb",
-            "p",
-            "source",
-        ]
-    ].drop_duplicates(
-        subset=[
-            "t_id",
-            "c_id",
-            "o_id",
-            "a_id",
-        ]
-    )
+    tcoa_list = results[["t_id", "c_id", "o_id", "a_id"]].drop_duplicates()
     # if target, comparator, outcome are not specified, use the first one
-    for num, row in results.iterrows():
-        t_id, c_id, o_id, a_id, _, _, _, _, _, _, _, _, _ = row
+    for num, row in tcoa_list.iterrows():
+        t_id, c_id, o_id, a_id = row
         logger.info(f"t_id: {t_id}, c_id: {c_id}, o_id: {o_id}")
 
         # if row in results have abnormal values(n<25), exclude them

@@ -57,7 +57,7 @@ if __name__ == "__main__":
     code_path = Path(
         "/Users/choibyungjin/Library/CloudStorage/OneDrive-아주대학교/study/teaching/aggregator"
     )
-    path = base_path / "noncardiac_pace/3year"
+    path = base_path / "HNNC_new/1_main_analysis"
     os.chdir(code_path)
     # logger.add("./log.log")
 
