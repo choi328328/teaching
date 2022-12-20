@@ -226,21 +226,17 @@ def make_html(
 
 def get_cohort_name(inpath, source):
     my_zip = zipfile.ZipFile(os.path.join(inpath, f"{source}.zip"))
-    cohort_count_path = [
-        i for i in my_zip.namelist() if i.endswith("CohortCounts.csv")
-    ][0]
 
-    cohort_df = pd.read_csv(my_zip.open(cohort_count_path))
     analysis_summ_path = [
         i for i in my_zip.namelist() if i.endswith("analysisSummary.csv")
     ][0]
 
-    anal_summary = pd.read_csv(my_zip.open(analysis_summ_path))[
-        ["analysisId", "analysisDescription"]
-    ].drop_duplicates()
+    anal_summary = pd.read_csv(my_zip.open(analysis_summ_path)).drop_duplicates()
 
     return {
-        **dict(zip(cohort_df.cohortDefinitionId, cohort_df.cohortName)),
+        **dict(zip(anal_summary.outcomeId, anal_summary.outcomeName)),
+        **dict(zip(anal_summary.comparatorId, anal_summary.comparatorName)),
+        **dict(zip(anal_summary.targetId, anal_summary.targetName)),
         "analysis": dict(
             zip(anal_summary.analysisId, anal_summary.analysisDescription)
         ),
