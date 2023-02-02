@@ -77,13 +77,18 @@ def ple_aggregation(
                     & (f"t{t_id}_c{c_id}" in i)
                     & (f"o{o_id}" in i)
                     & (f"s{a_id}" in i)  # a 추가해야함.
-                ][0]
-                # ZipFile .extract (member, path=None, pwd=None)
-                my_zip.extract(km_pop_path, temp_path)
-                km_pop = pyreadr.read_r(temp_path / km_pop_path)[None][
-                    ["treatment", "survivalTime", "outcomeCount"]
                 ]
-                km_pop_dict[source] = km_pop
+                if km_pop_path:
+                    km_pop_path=km_pop_path[0]
+                    my_zip.extract(km_pop_path, temp_path)
+                    km_pop = pyreadr.read_r(temp_path / km_pop_path)[None][
+                        ["treatment", "survivalTime", "outcomeCount"]
+                    ]
+                    km_pop_dict[source] = km_pop
+                if not km_pop_path:
+                    km_pop_dict[source] = pd.DataFrame(columns = ["treatment", "survivalTime", "outcomeCount"])
+                # ZipFile .extract (member, path=None, pwd=None)
+
 
         # get attrition dataframe
         attrition_cated = pd.concat(attrition_dict.values())
